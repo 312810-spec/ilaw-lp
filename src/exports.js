@@ -6,6 +6,8 @@ export function documentBlocks(plan){
  add('Review and adapt to your learners and classroom. Teacher review does not mean DepEd approval.');
  add(`School year: ${plan.input.schoolYear} | Grade ${plan.input.grade} | ${plan.input.subject} | ${plan.input.term}, Week ${plan.input.week}`);
  add(`Curriculum selected: ${plan.input.curriculum} (applicability requires verification) | ${plan.input.duration} minutes × ${plan.input.sessions} session(s) | ${plan.input.classSize} learners`);
+ for(const [key,label] of [['schoolName','School'],['section','Section'],['teacherName','Designed by'],['checkedBy','Checked by'],['notedBy','Noted by']])if(plan.input[key])add(`${label}: ${plan.input[key]}`);
+ if(plan.input.lessonReferences){add('Teacher-provided lesson references','Heading2');add(plan.input.lessonReferences);add('Listed by the teacher; not independently verified or an official curriculum approval.');}
  add('Curriculum provenance','Heading2');add(plan.source.competency);if(plan.source.code)add(`Code: ${plan.source.code}`);
  add(`Source status: ${plan.source.source.status} | ${plan.source.source.title}`);if(plan.source.source.url)add(`Source: ${plan.source.source.url}`);if(plan.source.source.section)add(`Section: ${plan.source.source.section}`);if(plan.source.source.excerpt)add(`Source excerpt: ${plan.source.source.excerpt}`);
  if(plan.source.contentStandard)add(`Content standard: ${plan.source.contentStandard}`);if(plan.source.performanceStandard)add(`Performance standard: ${plan.source.performanceStandard}`);

@@ -36,6 +36,12 @@ Configure `AI_API_KEY`, `AI_BASE_URL` (OpenAI-compatible chat-completions API), 
 
 Pipeline: curriculum resolution → competency unpacking → learner-context analysis → outcomes/evidence → assessment → learning experiences → differentiation → conditional Ways Forward → review → deterministic checks → save. Tokens are recorded when supplied by the provider. Full generation has eight focused model calls; component revision has one focused call, and session revision uses the staged pipeline.
 
+## Planning details
+
+Optional school, section, Designed by, Checked by and Noted by fields are collected in the class step and included in DOCX and print/PDF exports. School and signatory details are reused for the next new lesson on the same device. Add actual lesson references (titles, editions, pages or URLs) in the resources step; these are teacher-provided and do not change curriculum verification status. Quarter, Semester and Term 1–3 options are available; select the terminology applicable to your class.
+
+These workflow ideas were independently implemented after reviewing `alotski15-png/ilaw-app-2`, especially `app/components/LessonForm.jsx`. BOW PDF extraction, COT rubric mapping and presentation generation were reviewed but are not included in this update.
+
 ## Teacher journey
 
 1. Create a lesson from a class and a selected/pasted competency.
