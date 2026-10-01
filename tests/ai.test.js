@@ -19,3 +19,17 @@ test('targeted AI rewrite protects IDs and minutes and does not send all session
 test('unsupported official-policy claims and invented codes are rejected even when JSON is valid',async()=>{
  const {rejectUnsupportedClaims}=await import('../src/ai.js');assert.throws(()=>rejectUnsupportedClaims({text:'This lesson is DepEd approved.'},{code:null}),/unsupported/);assert.throws(()=>rejectUnsupportedClaims({text:'Official competency code: M5FA99.'},{code:null}),/invented/);assert.doesNotThrow(()=>rejectUnsupportedClaims({text:'This lesson is not DepEd approved; verify current policy.'},{code:null}));assert.doesNotThrow(()=>rejectUnsupportedClaims({text:'Competency code: M5FA99.'},{code:'M5FA99'}));
 });
+
+test('AI context includes teacher references and source excerpt without administrative identities',async()=>{
+ const {classroomContext}=await import('../src/ai.js');
+ const context=classroomContext({...input,teacherName:'Private name',schoolName:'Private school',lessonReferences:'Textbook p. 12: equivalent fractions'});
+ assert.equal(context.lessonReferences,'Textbook p. 12: equivalent fractions');
+ assert.ok(!('teacherName' in context));assert.ok(!('schoolName' in context));
+ const p=await generateGuided({...input,mode:'guided',teacherName:'Private name',lessonReferences:context.lessonReferences});
+ const original=p.sessions[0].experiences[0];let received;
+ const provider=new AIProvider({key:'fixture',fetchImpl:async(u,opts)=>{received=JSON.parse(JSON.parse(opts.body).messages[1].content).context;return {ok:true,json:async()=>({choices:[{message:{content:JSON.stringify({...original,teacher:'Revised wording'})}}]})};}});
+ const revised=await regenerateAI(p,{sessionId:'s1',section:'experiences',nodeId:original.id,instructions:'Use Cebuano and preserve the worked example'},provider);
+ assert.equal(received.revisionRequest,'Use Cebuano and preserve the worked example');assert.equal(received.classroom.lessonReferences,context.lessonReferences);assert.ok(!('teacherName' in received.classroom));
+ assert.deepEqual(revised.sessions[0].assessment,p.sessions[0].assessment);assert.equal(revised.input.teacherName,'Private name');
+ await assert.rejects(()=>regenerateAI(p,{sessionId:'s1',section:'experiences',instructions:'x'.repeat(1001)},provider),/1000/);
+});

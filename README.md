@@ -32,6 +32,8 @@ set +a
 npm start
 ```
 
+`npm start` now loads an optional local `.env` automatically; production environment variables take precedence. Keep `.env` out of Git.
+
 Configure `AI_API_KEY`, `AI_BASE_URL` (OpenAI-compatible chat-completions API), `AI_DESIGN_MODEL`, and `AI_FAST_MODEL`. The default model names are configurable starting points, not a claim that current official model documentation was inspected. Node's environment proxy support is enabled; keep inherited proxy/CA settings when applicable. A model/provider must support strict JSON-schema outputs. Missing credentials, invalid JSON, refusals, rate limits and failures never cause a fake AI fallback.
 
 Pipeline: curriculum resolution → competency unpacking → learner-context analysis → outcomes/evidence → assessment → learning experiences → differentiation → conditional Ways Forward → review → deterministic checks → save. Tokens are recorded when supplied by the provider. Full generation has eight focused model calls; component revision has one focused call, and session revision uses the staged pipeline.
@@ -93,3 +95,12 @@ Sites starter/publishing helpers were not installed in this executor and its con
 Concise `AGENTS.md`; specialized skills in `.agents/skills/`; evidence references under `docs/deped`; product reviews and constraints under `docs/product`; pipeline/security decisions under `docs/architecture`. Deterministic schemas and checks live in `src/schema.js` and `src/quality.js`, separate from provider prompts and curriculum metadata.
 
 For policy updates, an administrator may supply `ILAW_POLICY_FILE` after verifying primary sources and effective scope. It supports versioned provenance, effective dates, grade/curriculum scope and section terminology, without rewriting generation code. Each plan retains its snapshot. See `src/policy.js` and `docs/deped/sources.md`. Default installation remains explicitly unverified.
+
+## AI activation and targeted instructions
+
+1. Copy `.env.example` to `.env` and supply a server-side key, an OpenAI-compatible `/v1` base URL, and design/fast model identifiers supported by your provider. The provider must support strict JSON-schema chat completions. Model names in the example are starting points, not current recommendations.
+2. Run `npm run check:ai`. This opt-in check makes eight real API calls and can incur provider charges. It generates a one-session practice lesson, validates alignment and checks DOCX/print exports without storing a plan or printing lesson contents or credentials. Missing credentials fail explicitly.
+3. Run `npm start`, create a lesson and select Live AI design in the final planning step. Add actual reference excerpts and citations in Lesson references; a title or URL alone is not fetched or treated as a read document.
+4. On an AI lesson, open any revision dialog and enter a specific change, such as simplifying language or using Cebuano. Only the selected component/section/session is revised, with version history retained. School/signatory names are excluded from AI classroom context.
+
+Document upload/extraction, extraction caching, COT mapping and slide generation are not implemented. Printable PDF continues to use the browser print dialog. No provider credential is bundled and no real-provider check has been claimed without one.
