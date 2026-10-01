@@ -1,0 +1,36 @@
+node_modules/
+.env
+.env.local
+data/*.sqlite*
+data/*.json
+coverage/
+test-results/
+research-cache/
+
+# Local secrets and credentials (keep the blank configuration example)
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+credentials-*.json
+*.credentials.json
+
+# Runtime state, generated builds and caches
+data/
+dist/
+build/
+out/
+.next/
+.cache/
+.vite/
+.wrangler/
+.sites-runtime/
+__pycache__/
+*.pyc
+*.log
+*.zip
+*.tgz
+.DS_Store
