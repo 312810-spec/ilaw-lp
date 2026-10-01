@@ -1,0 +1,17 @@
+{
+  "name": "ilaw",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Evidence-linked lesson design workspace for Philippine teachers",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "node --use-env-proxy src/server.js",
+    "test": "node --test --test-isolation=none tests/*.test.js",
+    "check": "node scripts/check.js",
+    "research": "node --use-env-proxy scripts/research.js",
+    "test:e2e": "node tests/browser.js"
+  }
+}

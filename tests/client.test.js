@@ -1,0 +1,21 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createApp} from '../src/server.js';import {openDatabase} from '../src/db.js';import {clientHarness} from './dom-harness.js';
+test('client boot, real account flow, progressive form, generation route, edits, autosave, targeted revision and export controls',async()=>{
+ const db=openDatabase(':memory:');const app=await createApp({database:db});let c;
+ try{
+  c=await clientHarness(app);assert.ok(c.document.textContent.includes('Create your workspace'));
+  c.field('Display name').value='Teacher';c.field('Email address').value='client@example.test';c.field('Password').value='a long client password';await c.document.querySelector('form').emit('submit');await c.flush();assert.ok(c.document.textContent.includes('Your lesson workspace'));
+  const r=c.api.state.records.find(r=>r.id==='math-5');await c.api.newLesson(r);await c.flush();assert.ok(c.document.textContent.includes('Your class'));
+  for(let i=0;i<4;i++){await c.document.querySelector('#wizard-form').emit('submit');await c.flush();assert.equal(c.api.state.step,i+1);}
+  await c.document.querySelector('#wizard-form').emit('submit');
+  for(let i=0;i<150&&c.api.state.view!=='plan';i++)await c.flush();assert.equal(c.api.state.view,'plan');assert.ok(c.document.textContent.includes('I — Intentions'));
+  const criterion=c.field('Success criterion');criterion.value='Teacher custom criterion: accurate sum and justified model.';await criterion.emit('input');assert.equal(c.api.state.dirty,true);await c.api.saveNow();assert.equal(c.api.state.dirty,false);assert.ok(c.api.state.plan.revision>1);
+  const before=c.api.state.plan.sessions[0].objectives[0].criterion;c.api.state.section='experiences';c.api.renderEditor();assert.ok(c.field('Teacher role'));
+  c.api.confirmRegenerate('s1','experiences','s1-l3','low-resource');await c.button('Revise').emit('click');await c.flush();assert.equal(c.api.state.plan.sessions[0].objectives[0].criterion,before);
+  await c.api.showExport();assert.ok(c.document.querySelector('a[href]'));assert.ok(c.document.textContent.includes('Download DOCX'));c.api.closeModal();
+  await c.api.showVersions();assert.ok(c.document.textContent.includes('Guided revision: experiences component'));c.api.closeModal();
+  await c.api.reviewPlan();const checkbox=c.document.querySelector('#modal-root input');checkbox.checked=true;await checkbox.emit('change');await c.button('Record teacher review').emit('click');assert.equal(c.api.state.plan.metadata.status,'reviewed');
+ }finally{if(c)c.api.closeModal();db.close();}
+});
+test('UI evidence recording uses counts without learner identity fields',async()=>{
+ const db=openDatabase(':memory:');const app=await createApp({database:db});const c=await clientHarness(app);try{c.field('Display name').value='Teacher';c.field('Email address').value='evidence@example.test';c.field('Password').value='long evidence password';await c.document.querySelector('form').emit('submit');await c.flush();await c.api.newLesson(c.api.state.records.find(r=>r.id==='math-5'));await c.flush();c.api.state.input.sessions=2;for(let i=0;i<5;i++)await c.document.querySelector('#wizard-form').emit('submit');for(let i=0;i<150&&c.api.state.view!=='plan';i++)await c.flush();await c.button('Record evidence').emit('click');c.field('Needs prerequisite support').value=10;await c.field('Needs prerequisite support').emit('input');c.field('Partial mastery / reinforcement').value=15;await c.field('Partial mastery / reinforcement').emit('input');c.field('Meets the success criterion').value=10;await c.field('Meets the success criterion').emit('input');c.field('Ready for extension').value=5;await c.field('Ready for extension').emit('input');await c.document.querySelector('#modal-root form').emit('submit');assert.equal(c.api.state.plan.evidenceSummary.s1.support,10);c.api.state.session=1;c.api.renderEditor();assert.ok(c.document.textContent.includes('Evidence from Session 1'));assert.ok(!c.document.querySelector('input[name="learnerName"]'));const reopened=await clientHarness(app,{cookie:c.sessionCookie(),hash:`#plan/${c.api.state.plan.id}`});assert.equal(reopened.api.state.view,'plan');assert.ok(reopened.document.textContent.includes('Evidence recorded for this session'));reopened.api.closeModal();}finally{c.api.closeModal();db.close();}
+});

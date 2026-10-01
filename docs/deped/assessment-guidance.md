@@ -1,0 +1,2 @@
+# Assessment design
+Recommendations: connect every objective to observable evidence, criteria, activities and conditional Ways Forward. Performance competencies need demonstration or a performance product; a recall-only quiz is flagged. Diagnostic checks inform scaffolds, not grades. Generated keys are draft content for teacher verification. No grading weights or mastery thresholds are represented as current official policy.

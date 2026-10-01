@@ -1,0 +1,14 @@
+# Architecture
+Dependency-free JavaScript / Node 24 HTTP server, native SQLite, browser ES modules and CSS. Chosen because the greenfield environment has no package connectivity. Server-side persistence, auth, revisions, schema validation, rate limits and AI calls; no client secrets. This is a runnable local application, not a static mockup. Sites publishing is blocked because bundled setup/workflow scripts are unavailable and the configured proxy is unreachable; do not invent a deployment URL.
+
+Modules: schema.js (stage contracts), curriculum.js (immutable provenance), engine.js (guided backward design), quality.js (alignment graph checks), ai.js (real provider abstraction), db.js (transactional persistence), exports.js (DOCX/print), server.js (auth/API/jobs), public/app.js (workflow/editor).
+
+AI stages: unpack → context → outcomes → assessment → experiences → differentiation → ways → review. Inputs select only required prior structured outputs. JSON-schema responses validated; immutable source/context never overwritten by model output. Generation is a persisted asynchronous job with real stage status and tokens. Restart interrupts running jobs explicitly; completed plans are durable. Stage failure never substitutes a fake response. Retry makes a fresh job. Guided mode uses disclosed deterministic subject profiles and practice items, never claims AI use.
+
+Regeneration patches one activity/assessment/objective/session section or one I/L/A/W section; optimistic revision control prevents lost updates. Versions retain AI/guided draft, teacher edits and regeneration labels; restoring creates a new revision. Teacher review stores current quality warnings and does not establish official approval.
+
+SQLite uses WAL, prepared statements, indexed ownership queries and atomic plan/revision updates. Browser recovery is temporary only. Quality engine runs on all saves/exports and uses links, required content, resource checks and time sums; it does not prove semantic correctness or policy compliance. Model review is advisory.
+
+Policy loader: optional operator-reviewed registry in `ILAW_POLICY_FILE`, cached by file mtime. Generation stores an applicable effective/grade/curriculum-scoped snapshot with source citations and optional rendering terminology. Default is unverified. Updating source metadata does not certify implementation of every policy provision.
+
+Evidence log: per-session anonymous category counts with objective/assessment snapshots and revision timestamp. Validate totals against class size. Quality warns when current content differs from the basis of recorded evidence. Teacher-reported observations enter the next targeted session revision as observations, never as a model-inferred fact. Copies clear aggregate evidence; original content/revisions remain intact.

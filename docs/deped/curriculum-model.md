@@ -1,0 +1,4 @@
+# Curriculum provenance
+Records carry id, curriculum/version, school_year, grade, subject, term, week, competency, optional official code, content/performance standards, source URL/title/date, exact excerpt/page, effective dates and verification status.
+
+Built-in records are **practice examples**, authored for testing/illustration, not official curriculum extracts. Manual input is teacher-provided/unverified; official code stays null. Source records can be imported with a DepEd HTTPS URL and exact excerpt; they remain teacher-confirmed and require current applicability review. Do not infer weeks or standards from semantic similarity. Record filtering may suggest related examples, but cannot establish official alignment. A future reviewed dataset can be loaded from an admin-controlled file; only operator-reviewed authoritative records may use `verified` status.
