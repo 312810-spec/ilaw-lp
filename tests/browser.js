@@ -1,8 +1,7 @@
 import fs from 'node:fs/promises';import {createRequire} from 'node:module';import assert from 'node:assert/strict';
-import {createApp} from '../src/server.js';import {openDatabase} from '../src/db.js';import {dispatch} from './helpers.js';
-const require=createRequire(import.meta.url);await fs.mkdir('test-results',{recursive:true});
+import {createApp} from '../src/server.js';import {openDatabase} from '../src/db.js';const require=createRequire(import.meta.url);await fs.mkdir('test-results',{recursive:true});
 let chromium;
-let browser;const database=openDatabase(':memory:');const app=await createApp({database});
+let browser,page,listening=false;const errors=[];const database=openDatabase(':memory:');const app=await createApp({database,port:0});
 try{
  try{({chromium}=require('playwright'));}catch{throw Error('Playwright is missing. Run npm install, then npm run setup:browser.');}
  const candidates=process.env.BROWSER_PATH?[process.env.BROWSER_PATH]:[chromium.executablePath(),'/usr/bin/chromium','/usr/bin/chromium-browser','/usr/bin/google-chrome'];
@@ -10,9 +9,9 @@ try{
  if(!executablePath)throw Error(process.env.BROWSER_PATH?'BROWSER_PATH does not point to an existing executable.':'Chromium is missing. Run npm run setup:browser or set BROWSER_PATH to an installed Chromium executable.');
  browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-crashpad-for-testing']});
  const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
- // Use actual request handlers with browser requests, rather than mocking API data.
- await context.route('http://localhost:3000/**',async route=>{const req=route.request();const u=new URL(req.url());const r=await dispatch(app,{url:u.pathname+u.search,method:req.method(),headers:await req.allHeaders(),body:req.postData()||undefined});await route.fulfill({status:r.status,headers:r.headers,body:r.bytes});});
- const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://localhost:3000/');
+ // Real loopback HTTP avoids interception-header deadlocks and exercises browser cookies/compression.
+ const address=await app.listen();listening=true;const baseURL=`http://127.0.0.1:${address.port}`;
+ page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(baseURL);
  await page.getByLabel('Display name').fill('Teacher');await page.getByLabel('Email address').fill('browser@example.test');await page.getByLabel('Password',{exact:true}).fill('browser test password 123');await page.getByRole('button',{name:'Create teacher account'}).click();await page.getByRole('heading',{name:'Your lesson workspace'}).waitFor();
  await page.getByRole('button',{name:/Adding unlike fractions/}).click();
  await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('heading',{name:'Choose the learning'}).waitFor();await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:'Create guided draft'}).click();
@@ -23,5 +22,5 @@ try{
  const missingLabels=await page.evaluate(()=>[...document.querySelectorAll('input:not([type=hidden]),select,textarea')].filter(el=>!el.labels?.length&&!el.getAttribute('aria-label')).length);assert.equal(missingLabels,0);
  await page.getByRole('button',{name:'Export',exact:true}).click();const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Download DOCX'}).click()]);await download.saveAs('test-results/browser-export.docx');
  const [pdfDownload]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Download PDF'}).click()]);await pdfDownload.saveAs('test-results/browser-export.pdf');assert.match((await fs.readFile('test-results/browser-export.pdf')).subarray(0,8).toString(),/%PDF-1.7/);assert.deepEqual(errors,[]);await fs.writeFile('test-results/browser-status.json',JSON.stringify({status:'passed',desktop:'1440×1000',mobile:'390×844',journey:'account, five-step planning, real guided generation, autosave, targeted revision, DOCX and PDF downloads',accessibility:'labels and horizontal overflow only; not full WCAG audit'},null,2));console.log('Browser journey passed.');
-}catch(e){await fs.writeFile('test-results/browser-status.json',JSON.stringify({status:'blocked-or-failed',reason:e.message.slice(0,1500)},null,2));console.error('Browser verification did not complete:',e.message.slice(0,400));process.exitCode=1;}
-finally{if(browser)await browser.close();database.close();}
+}catch(e){if(page)try{await page.screenshot({path:'test-results/browser-failure.png',fullPage:true,timeout:5000});}catch{}await fs.writeFile('test-results/browser-status.json',JSON.stringify({status:'blocked-or-failed',reason:e.message.slice(0,1500),pageErrors:errors},null,2));console.error('Browser verification did not complete:',e.message.slice(0,400));process.exitCode=1;}
+finally{if(browser)await browser.close();if(listening)await app.close();database.close();}
