@@ -3,7 +3,7 @@ import {normalizeInput,validate,stages,validateSessions,ValidationError} from '.
 import {resolveCompetency} from './curriculum.js';
 import {qualityCheck} from './quality.js';
 import {policySnapshot} from './policy.js';
-export const stageLabels={ilawcraft:'Drafting your complete ILAW lesson',resolve:'Resolving competency and provenance',unpack:'Unpacking the competency',context:'Analyzing learner and classroom context',outcomes:'Defining outcomes and success criteria',assessment:'Designing assessment evidence',experiences:'Building learning experiences',differentiation:'Adding access and readiness supports',ways:'Preparing evidence-based Ways Forward',review:'Checking alignment and feasibility',save:'Saving your draft'};
+export const stageLabels={retry:'Provider interrupted; retrying automatically (up to 3 attempts)',repair:'Repairing the AI response to match the lesson checks',compatibility:'Adapting the provider JSON format; local checks remain active',recovery:'Continuing with smaller AI stages to complete your lesson',ilawcraft:'Drafting your complete ILAW lesson',resolve:'Resolving competency and provenance',unpack:'Unpacking the competency',context:'Analyzing learner and classroom context',outcomes:'Defining outcomes and success criteria',assessment:'Designing assessment evidence',experiences:'Building learning experiences',differentiation:'Adding access and readiness supports',ways:'Preparing evidence-based Ways Forward',review:'Checking alignment and feasibility',save:'Saving your draft'};
 const textContext=input=>input.localContext.trim()||'a familiar household or school situation';
 export function selectProfile(input,source){
  const text=input.competency.toLowerCase();const f=source.focus;
