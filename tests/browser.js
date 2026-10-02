@@ -11,7 +11,8 @@ try{
  const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
  // Real loopback HTTP avoids interception-header deadlocks and exercises browser cookies/compression.
  const address=await app.listen();listening=true;const baseURL=`http://127.0.0.1:${address.port}`;
- page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(baseURL);
+ const probe=await context.request.get(baseURL);console.log('HTTP probe',probe.status(),probe.headers()['content-type']);assert.equal(probe.status(),200);assert.match(probe.headers()['content-type'],/text\/html/);
+ page=await context.newPage();page.on('response',r=>{if(r.url()===baseURL+'/')console.log('Navigation response',r.status(),r.headers());});page.on('requestfailed',r=>console.log('Request failed',r.url(),r.failure()));page.on('download',d=>console.log('Download',d.suggestedFilename()));page.on('pageerror',e=>errors.push(e.message));await page.goto(baseURL);
  await page.getByLabel('Display name').fill('Teacher');await page.getByLabel('Email address').fill('browser@example.test');await page.getByLabel('Password',{exact:true}).fill('browser test password 123');await page.getByRole('button',{name:'Create teacher account'}).click();await page.getByRole('heading',{name:'Your lesson workspace'}).waitFor();
  await page.getByRole('button',{name:/Adding unlike fractions/}).click();
  await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('heading',{name:'Choose the learning'}).waitFor();await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:'Create guided draft'}).click();
