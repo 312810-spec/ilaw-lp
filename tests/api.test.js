@@ -57,3 +57,19 @@ test('login verifies the password, rotates session; gzip assets decode to the or
  const asset=await dispatch(app,{url:'/app.js',headers:{'accept-encoding':'gzip'}});assert.equal(asset.status,200);assert.equal(asset.headers['content-encoding'],'gzip');assert.match(gunzipSync(asset.bytes).toString(),/async function boot/);assert.ok(asset.bytes.length<30000);
  }finally{storage.close();}
 });
+test('account API keys are encrypted, owner scoped, CSRF protected and removable',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ilaw-keys-'));const filename=path.join(dir,'app.sqlite');let storage=openDatabase(filename);let app=await createApp({database:storage});
+ try{const t=await teacher(app);const secret='test-private-api-key-123456';
+ assert.equal((await dispatch(app,{url:'/api/account/ai'})).status,401);
+ assert.equal((await dispatch(app,{method:'PUT',url:'/api/account/ai',headers:{cookie:t.headers.cookie},body:{provider:'groq',apiKey:secret}})).status,403);
+ let r=await dispatch(app,{method:'PUT',url:'/api/account/ai',headers:t.headers,body:{provider:'groq',apiKey:secret}});assert.equal(r.status,200,r.text);assert.equal(r.json().configured,true);assert.ok(!r.text.includes(secret));
+ assert.ok(!storage.db.prepare('SELECT secret FROM ai_credentials').get().secret.includes(secret));
+ process.env.ILAW_REGISTRATION_ENABLED='true';const other=await teacher(app,'key-other@example.test');delete process.env.ILAW_REGISTRATION_ENABLED;
+ assert.equal((await dispatch(app,{url:'/api/account/ai',headers:other.headers})).json().configured,false);
+ assert.equal((await dispatch(app,{method:'PUT',url:'/api/account/ai',headers:t.headers,body:{provider:'http://localhost',apiKey:secret}})).status,400);
+ storage.close();storage=openDatabase(filename);app=await createApp({database:storage});
+ r=await dispatch(app,{url:'/api/account/ai',headers:t.headers});assert.equal(r.json().configured,true);assert.ok(!r.text.includes(secret));assert.equal(fs.statSync(filename+'.keys').mode&0o777,0o600);
+ await dispatch(app,{method:'DELETE',url:'/api/account/ai',headers:other.headers,body:{}});assert.equal((await dispatch(app,{url:'/api/account/ai',headers:t.headers})).json().configured,true);
+ await dispatch(app,{method:'DELETE',url:'/api/account/ai',headers:t.headers,body:{}});assert.equal((await dispatch(app,{url:'/api/account/ai',headers:t.headers})).json().configured,false);
+ }finally{delete process.env.ILAW_REGISTRATION_ENABLED;storage.close();fs.rmSync(dir,{recursive:true,force:true});}
+});
