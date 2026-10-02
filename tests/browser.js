@@ -7,11 +7,12 @@ try{
  const candidates=process.env.BROWSER_PATH?[process.env.BROWSER_PATH]:[chromium.executablePath(),'/usr/bin/chromium','/usr/bin/chromium-browser','/usr/bin/google-chrome'];
  let executablePath;for(const candidate of candidates){try{await fs.access(candidate);executablePath=candidate;break;}catch{}}
  if(!executablePath)throw Error(process.env.BROWSER_PATH?'BROWSER_PATH does not point to an existing executable.':'Chromium is missing. Run npm run setup:browser or set BROWSER_PATH to an installed Chromium executable.');
- browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-crashpad-for-testing']});
+ browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-crashpad-for-testing','--no-proxy-server']});
  const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
  // Real loopback HTTP avoids interception-header deadlocks and exercises browser cookies/compression.
  const address=await app.listen();listening=true;const baseURL=`http://127.0.0.1:${address.port}`;
- const probe=await context.request.get(baseURL);console.log('HTTP probe',probe.status(),probe.headers()['content-type']);assert.equal(probe.status(),200);assert.match(probe.headers()['content-type'],/text\/html/);
+ app.server.on('request',(req,res)=>{console.log('HTTP request',req.method,req.url);res.on('finish',()=>console.log('HTTP complete',req.url,res.statusCode));});
+ const probe=await fetch(baseURL,{signal:AbortSignal.timeout(10000)});console.log('HTTP probe',probe.status,probe.headers.get('content-type'));assert.equal(probe.status,200);assert.match(probe.headers.get('content-type'),/text\/html/);await probe.text();
  page=await context.newPage();page.on('response',r=>{if(r.url()===baseURL+'/')console.log('Navigation response',r.status(),r.headers());});page.on('requestfailed',r=>console.log('Request failed',r.url(),r.failure()));page.on('download',d=>console.log('Download',d.suggestedFilename()));page.on('pageerror',e=>errors.push(e.message));await page.goto(baseURL);
  await page.getByLabel('Display name').fill('Teacher');await page.getByLabel('Email address').fill('browser@example.test');await page.getByLabel('Password',{exact:true}).fill('browser test password 123');await page.getByRole('button',{name:'Create teacher account'}).click();await page.getByRole('heading',{name:'Your lesson workspace'}).waitFor();
  await page.getByRole('button',{name:/Adding unlike fractions/}).click();
