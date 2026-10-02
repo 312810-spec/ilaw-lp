@@ -7,7 +7,7 @@ try{
  const candidates=process.env.BROWSER_PATH?[process.env.BROWSER_PATH]:[chromium.executablePath(),'/usr/bin/chromium','/usr/bin/chromium-browser','/usr/bin/google-chrome'];
  let executablePath;for(const candidate of candidates){try{await fs.access(candidate);executablePath=candidate;break;}catch{}}
  if(!executablePath)throw Error(process.env.BROWSER_PATH?'BROWSER_PATH does not point to an existing executable.':'Chromium is missing. Run npm run setup:browser or set BROWSER_PATH to an installed Chromium executable.');
- browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-crashpad-for-testing','--no-proxy-server']});
+ browser=await chromium.launch({...(executablePath===chromium.executablePath()?{}:{executablePath}),headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
  const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
  // Real loopback HTTP avoids interception-header deadlocks and exercises browser cookies/compression.
  const address=await app.listen();listening=true;const baseURL=`http://127.0.0.1:${address.port}`;
