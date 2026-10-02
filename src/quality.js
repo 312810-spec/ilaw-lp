@@ -51,10 +51,10 @@ export function qualityCheck(plan){
     if(dependency&&(!input.resources.includes(dependency[0])||(dependency[0]==='internet'&&input.offline)))add('warning','resource',`${a.title} requires ${dependency[0]}, which is unavailable`,target,`Material: ${material}. Replace the resource or update classroom settings.`);
    }
    if(input.offline&&/visit (a |the )?(website|link)|watch.*youtube|search online/i.test(a.teacher+' '+a.learners))add('warning','offline',`${a.title} includes an online action in an offline classroom`,target);
-   if(!a.supports.trim())add('warning','support',`${a.title} needs a concrete access or readiness scaffold`,target);
+   if(input.support?.trim()&&!a.supports.trim()&&!s.differentiation.support.trim()&&!s.differentiation.accessibility.trim())add('warning','support',`${a.title} needs a concrete access or readiness scaffold`,target);
   }
   if(s.ways.some(w=>!w.condition.trim()||!w.evidence.trim()||!w.response.trim()))add('warning','follow-up','Ways Forward must connect evidence, a condition and an instructional response',`${s.id}:ways`);
-  if(Object.values(s.differentiation).some(v=>!v.trim()))add('warning','differentiation','Complete support, language, extension and accessibility decisions',`${s.id}:differentiation`);
+  if((input.support?.trim()&&!s.differentiation.support.trim()&&!s.differentiation.accessibility.trim())||(input.advanced?.trim()&&!s.differentiation.extension.trim()))add('warning','differentiation','Address the support or extension needs you recorded',`${s.id}:differentiation`);
   if(input.classSize>45&&/station/i.test(plan.analysis.approach))add('warning','workload','Station rotation needs a practical supervision plan for a large class',target);
  }
  if(plan.metadata.mode==='guided')add('info','guided','Guided-design draft: deterministic instructional suggestions, not AI generation','review','Exact curriculum alignment and subject accuracy require teacher review.');

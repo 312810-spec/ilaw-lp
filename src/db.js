@@ -1,6 +1,7 @@
 import {DatabaseSync} from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
+import {randomBytes} from 'node:crypto';
 export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sqlite'){
  if(filename!==':memory:')fs.mkdirSync(path.dirname(filename),{recursive:true,mode:0o700});
  const db=new DatabaseSync(filename);db.exec('PRAGMA journal_mode = WAL');db.exec('PRAGMA foreign_keys = ON');db.exec('PRAGMA busy_timeout = 5000');
@@ -17,6 +18,9 @@ export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sql
  `);
  db.prepare("UPDATE jobs SET status='failed',error='Generation was interrupted by a server restart. Your input is preserved; retry to start a fresh job.' WHERE status IN ('queued','running')").run();
  if(filename!==':memory:'){fs.chmodSync(filename,0o600);for(const suffix of ['-wal','-shm'])if(fs.existsSync(filename+suffix))fs.chmodSync(filename+suffix,0o600);}
+ const secretPath=filename+'.keys';let credentialKey;
+ if(filename===':memory:')credentialKey=randomBytes(32);else{try{fs.writeFileSync(secretPath,randomBytes(32),{flag:'wx',mode:0o600});}catch(e){if(e.code!=='EEXIST')throw e;}fs.chmodSync(secretPath,0o600);credentialKey=fs.readFileSync(secretPath);if(credentialKey.length!==32)throw Error('Invalid credential encryption key');}
+ db.exec('CREATE TABLE IF NOT EXISTS ai_credentials (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, provider TEXT NOT NULL, secret TEXT NOT NULL)');
  const transaction=fn=>{db.exec('BEGIN IMMEDIATE');try{const v=fn();db.exec('COMMIT');return v;}catch(e){db.exec('ROLLBACK');throw e;}};
  const getPlan=(id,user)=>{const r=db.prepare('SELECT * FROM plans WHERE id=? AND user_id=?').get(id,user);return r?{...JSON.parse(r.payload),revision:r.revision}:null;};
  const savePlan=(plan,user,{expectedRevision,label='Teacher revision',isNew=false}={})=>transaction(()=>{
@@ -31,5 +35,5 @@ export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sql
   db.prepare('DELETE FROM revisions WHERE plan_id=? AND revision > 1 AND revision < ?').run(plan.id,Math.max(2,revision-98));
   return payload;
  });
- return {db,transaction,getPlan,savePlan,close:()=>db.close()};
+ return {db,credentialKey,transaction,getPlan,savePlan,close:()=>db.close()};
 }

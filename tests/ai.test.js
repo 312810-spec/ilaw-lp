@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {AIProvider,generateAI,regenerateAI} from '../src/ai.js';
 import {generateGuided} from '../src/engine.js';import {examples} from '../src/curriculum.js';import {stages} from '../src/schema.js';
-const input={grade:5,subject:'Mathematics',competencyId:examples[1].id,competency:examples[1].competency,mode:'ai'};
+const input={grade:5,subject:'Mathematics',competencyId:examples[1].id,competency:examples[1].competency,mode:'ai',aiWorkflow:'staged'};
 test('missing credential never produces fake AI output',async()=>{const provider=new AIProvider({key:''});await assert.rejects(()=>generateAI(input,{provider}),/not configured/);});
 test('malformed JSON, invalid schema, refusal, limit and upstream failures fail safely',async()=>{
  for(const payload of [{choices:[{message:{content:'not json'}}]},{choices:[{message:{content:'{}'}}]},{choices:[{message:{refusal:'No'}}]},{choices:[{finish_reason:'length',message:{content:'{}'}}]}]){const provider=new AIProvider({key:'fixture',fetchImpl:async()=>({ok:true,json:async()=>payload})});await assert.rejects(()=>provider.generateStructured({stage:'unpack',schema:stages.unpack,context:{},instruction:'test'}));}

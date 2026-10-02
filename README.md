@@ -1,106 +1,82 @@
-# ILAW — Intelligent Lesson Planning Assistant
+# ILAW — Teacher lesson-planning workspace
 
-A teacher-controlled lesson-design application: five-step planning, curriculum provenance, backward design, structured ILAW editing, explainable checks, durable history/versioning, targeted revision and DOCX/print exports.
-
-**Delivery status:** implemented and tested at the application/request-handler and client-logic level. **Not declared production-ready.** Current authoritative DepEd policy/rollout research, independent market research, real-provider verification, native browser/mobile QA, live serving and deployment remain blocked by this environment. See [verification report](docs/product/verification.md). There is no fabricated deployment URL, AI response or official curriculum catalogue.
+A Node 24 / SQLite application for curriculum-grounded ILAW drafts, teacher edits, actual reflection, developmental observation/coaching and genuine Word/PDF exports. Current source gaps and validation limits are documented in [research implementation](docs/product/research-implementation.md).
 
 ## Run
 
-Node.js **24+**. No production package installation or database service required.
-
 ```sh
-cd /workspace/ilaw
 npm start
 ```
 
-Open `http://127.0.0.1:3000`. Create the first teacher account with a display name, email and password of at least 12 characters. SQLite is created in `data/ilaw.sqlite`; plans survive restarts and browser changes. Initial registration is closed after the first account unless the administrator explicitly enables it.
+Open `http://127.0.0.1:3000` and create the first teacher account. Node 24+ is required. No production packages or external database are needed. SQLite persists in `data/ilaw.sqlite`. Additional account registration requires administrator configuration `ILAW_REGISTRATION_ENABLED=true`; observers must have existing accounts before assignment. `.env` is loaded automatically; explicit environment values take precedence. Never commit credentials.
 
-This session's sandbox denies both TCP and Unix listeners (`EPERM`), so `npm start` cannot expose a preview here. Run in an environment that permits a local listener. No package downloads are needed to run the application.
+## Plan and teach
 
-## Real AI generation
+1. Select Kindergarten–Grade 12, subject, curriculum, school year, term, optional lesson date and division.
+2. Select an applicable imported competency or enter an exact source excerpt. Practice examples remain clearly labeled.
+3. Describe anonymous learner context and actual resources. Optionally record a minimum teaching route and a home/continuity alternative.
+4. Choose guided design or live AI, concise/detailed output and focused/KSA objectives. These are app preferences, not universal DepEd requirements.
+5. Edit ILAW sections; autosave, local recovery, optimistic revisions, history and targeted regeneration preserve teacher work.
+6. Use Classroom view while teaching. Enter actual aggregate evidence and post-lesson reflection separately from anticipated Ways Forward.
+7. Export the latest saved plan in concise/expanded DOCX or PDF. Companion tasks and answer keys come from the same accepted plan data. Separate teacher keys before distributing tasks.
 
-Guided design works without a provider credential and is explicitly **not AI-generated**. Five subject profiles provide actual practice tasks and keys. Arbitrary custom competencies produce an honest teacher-completed scaffold with a warning; they are not silently treated as fully designed lessons.
+Guided design uses five authored practice profiles. Other competencies receive an honest teacher-completed scaffold. It is not AI generation or an official curriculum catalog. Checks identify structural links, timing and resource issues; they do not certify subject correctness or DepEd compliance.
 
-For live AI, supply server-side environment variables:
+## IlawCraft-inspired AI
 
-```sh
-cp .env.example .env
-# Edit .env locally; never commit it or paste a key into the client.
-set -a
-. ./.env
-set +a
-npm start
-```
+The reference is [alotski15-png/ilaw-app-2](https://github.com/alotski15-png/ilaw-app-2), branded IlawCraft. The default AI workflow drafts a complete structured lesson in one call, including practical teaching prompts, actual tasks, worked keys, access supports and conditional follow-up. An eight-call staged backward-design alternative remains available. Prompts do not force HOTS, KSA, core values, fixed mastery percentages or official COT scores into every lesson. Models cannot edit curriculum provenance or invent actual reflection.
 
-`npm start` now loads an optional local `.env` automatically; production environment variables take precedence. Keep `.env` out of Git.
+This user-requested AI drafting workflow **does not establish compliance** with restrictions on fully AI-generated lesson plans. Signed applicable lesson-planning/AI guidance still needs review. Drafts disclose AI assistance and require teacher verification and adaptation.
 
-Configure `AI_API_KEY`, `AI_BASE_URL` (OpenAI-compatible chat-completions API), `AI_DESIGN_MODEL`, and `AI_FAST_MODEL`. The default model names are configurable starting points, not a claim that current official model documentation was inspected. Node's environment proxy support is enabled; keep inherited proxy/CA settings when applicable. A model/provider must support strict JSON-schema outputs. Missing credentials, invalid JSON, refusals, rate limits and failures never cause a fake AI fallback.
+Signed-in teachers open **AI settings** to save a masked Gemini or Groq key. Credentials are encrypted with AES-256-GCM, scoped to the account, used only on the server, and excluded from exports/device recovery. Saving is not a connection test; the separate Test connection action makes a small provider call and consumes provider quota. Free quotas and terms are provider-controlled; paid-account keys can incur charges. Gemini free-tier content may be used to improve Google products. Never send identifiable/sensitive learner information.
 
-Pipeline: curriculum resolution → competency unpacking → learner-context analysis → outcomes/evidence → assessment → learning experiences → differentiation → conditional Ways Forward → review → deterministic checks → save. Tokens are recorded when supplied by the provider. Full generation has eight focused model calls; component revision has one focused call, and session revision uses the staged pipeline.
+For administrator configuration, use `AI_API_KEY`, `AI_BASE_URL`, `AI_DESIGN_MODEL`, `AI_FAST_MODEL`. APIs must support the supplied JSON schema; provider-facing compatibility and lesson quality need live validation. No fake response or silent fallback is used. Account credentials override the administrator provider. Missing/refused/invalid/rate-limited output fails clearly while preserving input.
 
-## Planning details
+Selected wording/translation assistance displays original and proposed text for acceptance; protected numbers and mathematical symbols are checked. Meaning and subject correctness require teacher review. Accepted wording assistance is disclosed and saved in revision history. Initial model IDs, workflow, prompt version and usage are recorded when available.
 
-Optional school, section, Designed by, Checked by and Noted by fields are collected in the class step and included in DOCX and print/PDF exports. School and signatory details are reused for the next new lesson on the same device. Add actual lesson references (titles, editions, pages or URLs) in the resources step; these are teacher-provided and do not change curriculum verification status. Quarter, Semester and Term 1–3 options are available; select the terminology applicable to your class.
+## Curriculum, BOW and policy
 
-These workflow ideas were independently implemented after reviewing `alotski15-png/ilaw-app-2`, especially `app/components/LessonForm.jsx`. BOW PDF extraction, COT rubric mapping and presentation generation were reviewed but are not included in this update.
+The central BOW directory covers Kindergarten–Grade 12; its links are not populated competency data. Full embedded BOW retrieval remains incomplete. Grade 11/12 academic/TechPro resources have differing coverage. No all-grade completion claim is made.
 
-## Teacher journey
+Teachers can add one sourced competency or import 1–100 JSON rows at a time through Sources & policy / curriculum selection. All account imports remain **teacher-confirmed**, even if an uploaded row claims verification. Exact competencies, codes and supplied standards must occur in the excerpt. BOW rows additionally require exact curriculum version, school year, term and source week (or null). Batch imports are transactional. See [BOW import](docs/deped/bow-import.md).
 
-1. Create a lesson from a class and a selected/pasted competency.
-2. Verify provenance: practice example, teacher-provided, teacher-confirmed source, or operator-reviewed record.
-3. Add optional anonymous learner context, real classroom resources and preferences.
-4. Create a guided draft or use configured live AI.
-5. Edit Intentions, Learning Experiences, Assessing Learning and Ways Forward. Autosave updates SQLite; temporary device recovery protects unsaved edits.
-6. Reorder/duplicate activities; revise one component or session; reallocate time without replacing text. Check warnings.
-7. Record anonymous session evidence, use it to adapt the next session, compare/restore revisions, duplicate a plan, or mark your professional review.
-8. Export editable DOCX; print or save PDF from the print view.
+Operators can load reviewed datasets through `ILAW_CURRICULUM_FILE` and `ILAW_BOW_FILE`. `node scripts/import-bow.js reviewed.json output.json` validates a reviewed BOW array before writing it. Official source identity and applicability are separate checks; codes/weeks/standards are never inferred.
 
-Every edit resets review status. "Teacher-reviewed" does **not** mean DepEd-approved. Structural links are not a semantic or official-compliance certification. Current-policy warning remains visible because no current policy was verified.
+`ILAW_POLICY_FILE` accepts an operator-reviewed registry with citations/version/effective dates and optional `gradeScope`, `curriculumScope`, `divisionScope`, `schoolYearScope`, plus ILAW section labels. Applicability uses the planned lesson date when supplied, otherwise today's date. Missing scoped context fails closed. Existing plans retain their snapshots. Full signed current orders and local instructions remain review dependencies; the source directory does not itself activate requirements.
 
-## Curriculum and policies
+## Observation and coaching
 
-Built-in Grade 1 reading, Grade 5 mathematics, Grade 7 science, Grade 10 mathematics and SHS communication records are authored **practice examples**, not official DepEd curriculum extracts. No invented codes are assigned. Custom competencies remain unverified.
+Open a saved lesson and choose **Observation**. Select developmental coaching or formal preparation, focus, optional agreed schedule and an existing observer account. Assignment grants that account access only to this observation and its preserved lesson snapshot. Teachers cannot claim observer-recorded evidence, and observers cannot write a teacher's reflection.
 
-Teachers can import an exact competency excerpt with an official DepEd HTTPS URL and section/page. Imports are labelled **teacher-confirmed**, not independently verified. An administrator may supply reviewed records through `ILAW_CURRICULUM_FILE`, pointing to a JSON array matching `src/curriculum.js`; verified records require verification date and policy version. Exact code text must occur in the excerpt. Effective dates and source/curriculum versions are carried in the model.
+Notes distinguish observed, teacher-reported, planned and not-observed evidence; interpretation is separate. Draft notes recover locally; submitted notes and amendments retain author/timestamp. Reflection and coaching actions are versioned. Finalized records can be reopened by their owner for a recorded amendment. History shows prior records, and print export preserves evidence status. Observation evidence is not sent to AI.
 
-Research registry: [docs/deped/sources.md](docs/deped/sources.md). `npm run research` retrieves candidate sources when network access works; retrieval alone does not establish applicability or verification. Never assume DO 42 s. 2016 or DO 8 s. 2015 remains controlling, or that ILAW is nationally mandated, without reviewing current authoritative guidance.
+Formal scores, fixed observation counts, current-year indicators, alternative modalities, approved COT forms and rating transmutations remain disabled until complete applicable signed tools are reviewed. This module is not an official appraisal system. No video/emotion/intelligence inference is performed.
 
-## Testing
+## Exports and verification
+
+DOCX is an editable ZIP/XML Word document. Direct PDF uses a bundled licensed DejaVu font and preserves supported Unicode mathematical symbols. Unsupported glyphs produce a useful error; use DOCX or browser print for those characters. PDF is text-based, not full LaTeX typesetting. Concise and expanded views share data; no fixed page limit is imposed.
 
 ```sh
 npm test
 npm run check
+node scripts/export-check.js
 npm run test:e2e
 ```
 
-Unit/integration/client smoke tests need no third-party libraries. Integration tests invoke the application's actual HTTP request listener in-process because socket operations are denied here. The client smoke test executes the actual browser source against a small DOM test double; it does **not** prove native rendering or accessibility.
+Request-handler tests exercise real server logic without sockets; the client harness tests logic without claiming native rendering. Native E2E requires Playwright/Chromium:
 
-Install development dependencies with `npm ci`, then install Chromium and its OS dependencies with `npm run setup:browser`. The separate browser test uses Playwright and Chromium, exercising real application handlers (not fake API fixtures), captures desktop/mobile layouts, checks labels/overflow and downloads DOCX. The test prefers Playwright’s installed browser, falls back to common system Chromium paths, and honors an explicit `BROWSER_PATH` without silently replacing an invalid override. The current environment has Playwright but no Chromium; the attempted browser download returned an invalid archive. GitHub Actions installs Chromium and runs the full checks on pull requests and main pushes, preserving screenshots and status artifacts. Its failed/blocked result is recorded in `test-results/browser-status.json` rather than disguised as a pass.
+```sh
+npm ci
+npm run setup:browser
+npm run test:e2e
+```
 
-`node scripts/export-check.js` independently validates DOCX ZIP CRC/XML with Python’s standard library and writes representative lesson artifacts in `test-results/`. API/provider fixtures live only in tests.
+Browser setup resolves the installed Playwright CLI, including runtime-provided installations. Set `BROWSER_PATH` for an existing compatible Chromium, or `ILAW_SKIP_BROWSER_OS_DEPS=true` to skip OS dependency installation when they already exist. Browser checks use actual handlers, desktop/mobile screenshots and DOCX/PDF downloads. Current Chromium download attempts failed; a native pass is not claimed. GitHub Actions installs the browser and runs the checks.
 
-## Security and deployment
+`npm run check:ai` is an opt-in eight-call live diagnostic requiring administrator credentials; it can consume quota/incur charges. No live provider comparison or teacher-scored benchmark has been completed.
 
-- Server-side credential use, scrypt password hashing with random salt, opaque hashed session tokens, HttpOnly/SameSite cookies, CSRF tokens, origin/host checks, ownership-scoped queries, prepared statements and bounded requests.
-- Per-account generation limits and request/auth limits. Up to three active jobs per process and one per teacher; running jobs fail explicitly after restart, preserving input.
-- No learner PII fields; no prompt/lesson/API-key logging. Device recovery is local and user-scoped; SQLite is authoritative.
-- CSP forbids inline scripts, external embedding and unexpected external resource execution. XML/HTML exports escape teacher text.
-- Loopback-only by default. Bootstrap the first account locally before exposure. For external serving, use an HTTPS reverse proxy, set `HOST` and `ILAW_PUBLIC_ORIGIN` to the exact HTTPS origin, and securely provision secrets. Secure cookies/HSTS are enabled for a configured public origin. Back up SQLite using the SQLite backup mechanism, with restrictive permissions.
-- No password-reset email service, account sharing, school multi-tenancy, distributed job queue or production operations monitoring is included. Add these before a broad public launch as required by deployment scope.
+## Security and operations
 
-Sites starter/publishing helpers were not installed in this executor and its configured proxy is unreachable. This Node/SQLite application cannot be falsely published as a static Site; production hosting or an edge/D1 adapter must be provisioned in an appropriate environment. No incomplete Site was registered.
+Password hashing, HttpOnly/SameSite sessions, CSRF/origin checks, ownership/assignment authorization, bounded requests, prepared queries and transactional revisions are retained. Initial keys use owner-only permissions in `<database>.keys`; protect and back up this encryption file with SQLite. Losing it makes account keys unreadable. Secrets and prompt contents are not logged.
 
-## Maintainability
-
-Concise `AGENTS.md`; specialized skills in `.agents/skills/`; evidence references under `docs/deped`; product reviews and constraints under `docs/product`; pipeline/security decisions under `docs/architecture`. Deterministic schemas and checks live in `src/schema.js` and `src/quality.js`, separate from provider prompts and curriculum metadata.
-
-For policy updates, an administrator may supply `ILAW_POLICY_FILE` after verifying primary sources and effective scope. It supports versioned provenance, effective dates, grade/curriculum scope and section terminology, without rewriting generation code. Each plan retains its snapshot. See `src/policy.js` and `docs/deped/sources.md`. Default installation remains explicitly unverified.
-
-## AI activation and targeted instructions
-
-1. Copy `.env.example` to `.env` and supply a server-side key, an OpenAI-compatible `/v1` base URL, and design/fast model identifiers supported by your provider. The provider must support strict JSON-schema chat completions. Model names in the example are starting points, not current recommendations.
-2. Run `npm run check:ai`. This opt-in check makes eight real API calls and can incur provider charges. It generates a one-session practice lesson, validates alignment and checks DOCX/print exports without storing a plan or printing lesson contents or credentials. Missing credentials fail explicitly.
-3. Run `npm start`, create a lesson and select Live AI design in the final planning step. Add actual reference excerpts and citations in Lesson references; a title or URL alone is not fetched or treated as a read document.
-4. On an AI lesson, open any revision dialog and enter a specific change, such as simplifying language or using Cebuano. Only the selected component/section/session is revised, with version history retained. School/signatory names are excluded from AI classroom context.
-
-Document upload/extraction, extraction caching, COT mapping and slide generation are not implemented. Printable PDF continues to use the browser print dialog. No provider credential is bundled and no real-provider check has been claimed without one.
+For external serving, provision an HTTPS reverse proxy and exact `ILAW_PUBLIC_ORIGIN`; configure `HOST` appropriately. No deployment is created by these changes. Password-reset service, school multi-tenancy, production monitoring and formal appraisal authority are outside the current release. Review these needs before broad deployment.

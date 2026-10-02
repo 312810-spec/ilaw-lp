@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import {ValidationError} from './schema.js';
+import {loadBOW,matchesBOW} from './bow.js';
 const practice=(id,grade,subject,title,competency,focus)=>({id,grade,subject,title,competency,focus,curriculum:'Practice example — curriculum not verified',curriculumVersion:null,schoolYear:null,term:null,week:null,code:null,contentStandard:null,performanceStandard:null,source:{status:'practice',title:'ILAW instructional-design practice example',url:null,date:null,section:null,excerpt:null,verifiedAt:null,policyVersion:null,effectiveFrom:null,effectiveTo:null}});
 export const examples=[
  practice('reading-1',1,'Reading and Literacy','Reading short words','Blend letter sounds to read simple consonant-vowel-consonant words.','cvc'),
@@ -10,29 +11,36 @@ export const examples=[
 ];
 export function loadCurriculum(){
  const file=process.env.ILAW_CURRICULUM_FILE;
- if(!file)return [...examples];
+ if(!file){const all=[...examples,...loadBOW(validateRecord)];if(new Set(all.map(r=>r.id)).size!==all.length)throw Error('Duplicate curriculum record id');return all;}
  const records=JSON.parse(fs.readFileSync(file,'utf8'));
  if(!Array.isArray(records))throw Error('Curriculum file must contain an array');
  for(const r of records)validateRecord(r,true);
- return [...examples,...records];
+ const all=[...examples,...records,...loadBOW(validateRecord)];
+ if(new Set(all.map(r=>r.id)).size!==all.length)throw Error('Duplicate curriculum record id');
+ return all;
 }
-export function officialURL(url){try{const u=new URL(url);return u.protocol==='https:'&&(u.hostname==='deped.gov.ph'||u.hostname.endsWith('.deped.gov.ph'))&&!u.username&&!u.password;}catch{return false;}}
+export function officialURL(url){try{const u=new URL(url);return u.protocol==='https:'&&(u.hostname==='deped.gov.ph'||u.hostname.endsWith('.deped.gov.ph')||(u.hostname==='sites.google.com'&&u.pathname.startsWith('/deped.gov.ph/lsguide/')))&&!u.username&&!u.password;}catch{return false;}}
 export function validateRecord(r,operator=false){
  if(!r||typeof r!=='object')throw new ValidationError('Curriculum record must be an object');
  for(const field of ['id','subject','competency','curriculum'])if(typeof r[field]!=='string'||!r[field].trim()||r[field].length>4000)throw new ValidationError(`Curriculum ${field} is required`);
- if(!Number.isInteger(r.grade)||r.grade<1||r.grade>12)throw new ValidationError('Invalid curriculum grade');
+ if(!Number.isInteger(r.grade)||r.grade<0||r.grade>12)throw new ValidationError('Invalid curriculum grade');
  if(!r.source||!officialURL(r.source.url)||typeof r.source.title!=='string'||!r.source.title.trim()||typeof r.source.section!=='string'||!r.source.section.trim()||typeof r.source.excerpt!=='string'||!r.source.excerpt.trim())throw new ValidationError('An official DepEd HTTPS URL, source title, exact section/page and excerpt are required');
  if(!r.source.excerpt.includes(r.competency))throw new ValidationError('The competency must occur verbatim in the supplied source excerpt');
  if(r.source.status==='verified'&&(!operator||!r.source.verifiedAt||!r.source.policyVersion))throw new ValidationError('Verified records need operator review, verification date and policy version');
  if(!['teacher-confirmed','verified'].includes(r.source.status))throw new ValidationError('Invalid source verification status');
  if(r.code!=null&&(typeof r.code!=='string'||!r.source.excerpt.includes(r.code)))throw new ValidationError('An official code must occur in the source excerpt');
+ for(const field of ['contentStandard','performanceStandard'])if(r[field]&&(typeof r[field]!=='string'||!r.source.excerpt.includes(r[field])))throw new ValidationError(`${field} must occur verbatim in the source excerpt`);
+ for(const k of ['effectiveFrom','effectiveTo'])if(r.source[k]&&(!/^\d{4}-\d{2}-\d{2}$/.test(r.source[k])||Number.isNaN(Date.parse(r.source[k]))||new Date(r.source[k]).toISOString().slice(0,10)!==r.source[k]))throw new ValidationError('Invalid source effective date');
+ if(r.source.effectiveFrom&&r.source.effectiveTo&&r.source.effectiveFrom>r.source.effectiveTo)throw new ValidationError('Source effective dates are reversed');
  return r;
 }
 export function resolveCompetency(input,records=loadCurriculum()){
  const record=records.find(r=>r.id===input.competencyId);
  if(record){
+  if(record.kind==='budget-of-work'&&!matchesBOW(record,input))throw new ValidationError('The selected Budget of Work does not match the school year, curriculum, term or source week. Select an applicable row.');
   if(record.grade!==input.grade||record.subject!==input.subject)throw new ValidationError('The selected competency does not match the grade and subject. Select again or enter a custom competency.');
   if(record.competency!==input.competency)throw new ValidationError('The competency text was changed. Choose custom input to preserve honest provenance.');
+  const date=input.lessonDate||new Date().toISOString().slice(0,10);if((record.source.effectiveFrom&&record.source.effectiveFrom>date)||(record.source.effectiveTo&&record.source.effectiveTo<date))throw new ValidationError('Selected source is outside its effective dates for this lesson');
   if(record.source.status==='verified'&&record.curriculum!==input.curriculum)throw new ValidationError('The selected curriculum differs from the verified record');
   return structuredClone(record);
  }
@@ -40,8 +48,9 @@ export function resolveCompetency(input,records=loadCurriculum()){
  return {id:'manual',grade:input.grade,subject:input.subject,title:'Teacher-provided competency',competency:input.competency,focus:null,curriculum:input.curriculum,curriculumVersion:null,schoolYear:input.schoolYear,term:input.term,week:input.week,code:null,contentStandard:input.contentStandard||null,performanceStandard:input.performanceStandard||null,source:{status:'teacher-provided',title:'Teacher-provided text — verify against your current curriculum guide',url:null,date:null,section:null,excerpt:null,verifiedAt:null,policyVersion:null,effectiveFrom:null,effectiveTo:null}};
 }
 export const policySources=[
- {id:'ilaw',title:'Current ILAW lesson documentation',category:'Unverified current policy',url:'https://www.deped.gov.ph/category/issuances/deped-orders/',date:null,section:'Latest applicable issuance not retrieved',interpretation:'ILAW is the requested document structure. A current national mandate has not been verified.',behavior:'No compliance or DepEd-approval claim; teacher review required.'},
- {id:'lesson-prep',title:'DO 42, s. 2016 — Daily Lesson Preparation',category:'Historical reference; current applicability unverified',url:'https://www.deped.gov.ph/2016/06/17/do-42-s-2016-policy-guidelines-on-daily-lesson-preparation-for-the-k-to-12-basic-education-program/',date:'2016-06-17',section:'Policy Guidelines — exact current section review pending',interpretation:'Do not presume older DLL/DLP guidance is the current controlling policy.',behavior:'No forced DLL/DLP requirement.'},
- {id:'assessment',title:'DO 8, s. 2015 — Classroom Assessment',category:'Historical reference; current applicability unverified',url:'https://www.deped.gov.ph/2015/04/01/do-8-s-2015-policy-guidelines-on-classroom-assessment-for-the-k-to-12-basic-education-program/',date:'2015-04-01',section:'Policy Guidelines — applicability review pending',interpretation:'No current grading or mastery-threshold claim.',behavior:'Assessment criteria are editable pedagogical recommendations.'},
- {id:'curriculum',title:'DepEd curriculum resources',category:'Primary-source entry point; guides not verified',url:'https://www.deped.gov.ph/matatag-curriculum/',date:null,section:'Grade and learning-area guides',interpretation:'Curriculum rollout and year/grade applicability need review.',behavior:'Practice records labelled; manual codes never inferred.'}
+ {id:'ilaw-current',title:'DepEd LS ILAW implementation guidance',category:'Official implementation guidance; applicability review required',url:'https://sites.google.com/deped.gov.ph/lsguide/lesson-planning',date:null,section:'ILAW guides / Lesson Plan Guide',interpretation:'Official guidance describes simplified ILAW as a guide, not a checklist, and contextual adaptation of exemplars.',behavior:'Flexible detail; no automatic compliance claim.'},
+ {id:'national-current',title:'Current national orders and enclosures',category:'Official order register; signed enclosures require review',url:'https://www.deped.gov.ph/2026/06/?cat=8',date:'2026-06',section:'June order register',interpretation:'Review lesson-planning, assessment, continuity and SHS issuances with their exact effective scope.',behavior:'Dates, school year and division are checked against operator-reviewed registry records.'},
+ {id:'bow-current',title:'Three-term Budget of Work directory',category:'Official source directory; full competency coverage not imported',url:'https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work',date:null,section:'Grade-level learning-area guides',interpretation:'Source links do not establish a complete competency dataset.',behavior:'Exact excerpts, source status and grade/subject/year/term/week matching.'},
+ {id:'ai-policy',title:'Cebu Province dissemination of lesson-planning guidance',category:'Official document located; full-text verification pending',url:'https://www.cebuprovince.deped.gov.ph/Memoranda/memo2026/DM_s2026_375.pdf',date:null,section:'DO 016 attachment; exact paragraph review pending',interpretation:'Research found an indexed restriction on fully AI-generated plans. Review the signed applicable guidance before use.',behavior:'AI drafts disclose drafting assistance and require teacher verification; no DepEd approval claim.'},
+ {id:'observation',title:'Multi-year PMES for teachers',category:'Official baseline; current-year instructions and annexes require review',url:'https://www.deped.gov.ph/wp-content/uploads/DM_s2025_089r.pdf',date:'2025-10-01',section:'Observation / feedback provisions',interpretation:'Do not carry school-year-specific exceptions or draft alternatives into current requirements.',behavior:'Developmental coaching and preparation only; formal scoring remains unavailable.'}
 ];

@@ -1,8 +1,9 @@
+const gradeName=grade=>Number(grade)===0?'Kindergarten':`Grade ${grade}`;
 import {normalizeInput,validate,stages,validateSessions,ValidationError} from './schema.js';
 import {resolveCompetency} from './curriculum.js';
 import {qualityCheck} from './quality.js';
 import {policySnapshot} from './policy.js';
-export const stageLabels={resolve:'Resolving competency and provenance',unpack:'Unpacking the competency',context:'Analyzing learner and classroom context',outcomes:'Defining outcomes and success criteria',assessment:'Designing assessment evidence',experiences:'Building learning experiences',differentiation:'Adding access and readiness supports',ways:'Preparing evidence-based Ways Forward',review:'Checking alignment and feasibility',save:'Saving your draft'};
+export const stageLabels={ilawcraft:'Drafting your complete ILAW lesson',resolve:'Resolving competency and provenance',unpack:'Unpacking the competency',context:'Analyzing learner and classroom context',outcomes:'Defining outcomes and success criteria',assessment:'Designing assessment evidence',experiences:'Building learning experiences',differentiation:'Adding access and readiness supports',ways:'Preparing evidence-based Ways Forward',review:'Checking alignment and feasibility',save:'Saving your draft'};
 const textContext=input=>input.localContext.trim()||'a familiar household or school situation';
 export function selectProfile(input,source){
  const text=input.competency.toLowerCase();const f=source.focus;
@@ -136,7 +137,7 @@ export function assemblePlan(input,source,parts,mode){
  const sessions=parts.outcomes.sessions.map(s=>({...s,...Object.fromEntries(['assessment','experiences','differentiation','ways'].map(k=>[k,parts[k].sessions.find(x=>x.id===s.id)?.[k]]))}));
  validateSessions(sessions,input.sessions);
  const policy=policySnapshot(input);
- const plan={policy,id:crypto.randomUUID(),title:`Grade ${input.grade} ${input.subject} · ${source.title==='Teacher-provided competency'?input.competency.slice(0,70):source.title}`,input,source,unpacking:parts.unpack,analysis:parts.context,sessions,review:parts.review,metadata:{mode,origin:mode==='ai'?'AI draft':'Guided-design draft',promptVersion:'ilaw-staged-v1',policyVersion:policy.policyVersion,curriculumVersion:source.curriculumVersion||'unverified',status:'draft',createdAt:new Date().toISOString(),modifiedAt:new Date().toISOString(),tokens:parts.tokens||null}};
+ const plan={policy,id:crypto.randomUUID(),title:`${gradeName(input.grade)} ${input.subject} · ${source.title==='Teacher-provided competency'?input.competency.slice(0,70):source.title}`,input,source,unpacking:parts.unpack,analysis:parts.context,sessions,review:parts.review,metadata:{mode,origin:mode==='ai'?'AI draft':'Guided-design draft',promptVersion:'ilaw-staged-v1',policyVersion:policy.policyVersion,curriculumVersion:source.curriculumVersion||'unverified',status:'draft',createdAt:new Date().toISOString(),modifiedAt:new Date().toISOString(),tokens:parts.tokens||null,models:parts.models||[],aiWorkflow:mode==='ai'?input.aiWorkflow:null,aiDeclaration:mode==='ai'?'AI assisted in drafting objectives, assessments, activities and conditional follow-up. The teacher must verify, adapt and disclose use under applicable policy.':'No AI used in initial guided drafting.'}};
  plan.quality=qualityCheck(plan);return plan;
 }
 export async function generateGuided(raw,{records,onStage=async()=>{}}={}){

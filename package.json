@@ -14,7 +14,7 @@
     "research": "node --use-env-proxy scripts/research.js",
     "test:e2e": "node tests/browser.js",
     "check:ai": "node --env-file-if-exists=.env --use-env-proxy scripts/ai-check.js",
-    "setup:browser": "playwright install --with-deps chromium"
+    "setup:browser": "node scripts/setup-browser.js"
   },
   "devDependencies": {
     "playwright": "1.62.1"
