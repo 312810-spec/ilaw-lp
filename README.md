@@ -80,3 +80,11 @@ Browser setup resolves the installed Playwright CLI, including runtime-provided 
 Password hashing, HttpOnly/SameSite sessions, CSRF/origin checks, ownership/assignment authorization, bounded requests, prepared queries and transactional revisions are retained. Initial keys use owner-only permissions in `<database>.keys`; protect and back up this encryption file with SQLite. Losing it makes account keys unreadable. Secrets and prompt contents are not logged.
 
 For external serving, provision an HTTPS reverse proxy and exact `ILAW_PUBLIC_ORIGIN`; configure `HOST` appropriately. No deployment is created by these changes. Password-reset service, school multi-tenancy, production monitoring and formal appraisal authority are outside the current release. Review these needs before broad deployment.
+
+## Project workflow and next enhancements
+
+[FORGE v2](docs/workflow/FORGE.md) adapts the user's LIKHA-SIS workflow to this
+project. The [AI enhancement analysis](docs/product/forge-ai-enhancement-analysis.md)
+compares three approaches and prioritizes reliable complete AI drafting,
+resumable recovery, teacher-friendly setup and content-quality validation.
+Runtime proposals in that analysis are not implementation claims.
