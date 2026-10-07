@@ -16,14 +16,15 @@ export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sql
  CREATE TABLE IF NOT EXISTS curriculum (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, payload TEXT NOT NULL);
  PRAGMA user_version = 1;
  `);
- db.prepare("UPDATE jobs SET status='failed',error='Generation was interrupted by a server restart. Your input is preserved; retry to start a fresh job.' WHERE status IN ('queued','running')").run();
+ db.prepare("UPDATE jobs SET status='failed',error='Generation was interrupted by a server restart. Your input is preserved; resume to reuse validated stages.' WHERE status IN ('queued','running')").run();
  if(filename!==':memory:'){fs.chmodSync(filename,0o600);for(const suffix of ['-wal','-shm'])if(fs.existsSync(filename+suffix))fs.chmodSync(filename+suffix,0o600);}
  const secretPath=filename+'.keys';let credentialKey;
  if(filename===':memory:')credentialKey=randomBytes(32);else{try{fs.writeFileSync(secretPath,randomBytes(32),{flag:'wx',mode:0o600});}catch(e){if(e.code!=='EEXIST')throw e;}fs.chmodSync(secretPath,0o600);credentialKey=fs.readFileSync(secretPath);if(credentialKey.length!==32)throw Error('Invalid credential encryption key');}
  db.exec('CREATE TABLE IF NOT EXISTS ai_credentials (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, provider TEXT NOT NULL, secret TEXT NOT NULL)');
+ db.exec('CREATE TABLE IF NOT EXISTS job_checkpoints (job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
  const transaction=fn=>{db.exec('BEGIN IMMEDIATE');try{const v=fn();db.exec('COMMIT');return v;}catch(e){db.exec('ROLLBACK');throw e;}};
  const getPlan=(id,user)=>{const r=db.prepare('SELECT * FROM plans WHERE id=? AND user_id=?').get(id,user);return r?{...JSON.parse(r.payload),revision:r.revision}:null;};
- const savePlan=(plan,user,{expectedRevision,label='Teacher revision',isNew=false}={})=>transaction(()=>{
+ const savePlan=(plan,user,{expectedRevision,label='Teacher revision',isNew=false,onSaved}={})=>transaction(()=>{
   const r=db.prepare('SELECT revision FROM plans WHERE id=? AND user_id=?').get(plan.id,user);
   if(!r&&!isNew){const e=Error('Lesson not found');e.status=404;throw e;}
   if(r&&r.revision!==expectedRevision){const e=Error('This lesson has a newer revision. Your edits are preserved locally. Reload the latest version before saving.');e.status=409;throw e;}
@@ -33,6 +34,7 @@ export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sql
   else db.prepare('INSERT INTO plans (id,user_id,title,grade,subject,status,revision,payload,created_at,modified_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(plan.id,user,plan.title,plan.input.grade,plan.input.subject,plan.metadata.status,revision,serialized,now,now);
   db.prepare('INSERT INTO revisions (plan_id,revision,label,payload,created_at) VALUES (?,?,?,?,?)').run(plan.id,revision,label,serialized,now);
   db.prepare('DELETE FROM revisions WHERE plan_id=? AND revision > 1 AND revision < ?').run(plan.id,Math.max(2,revision-98));
+  onSaved?.(payload);
   return payload;
  });
  return {db,credentialKey,transaction,getPlan,savePlan,close:()=>db.close()};
