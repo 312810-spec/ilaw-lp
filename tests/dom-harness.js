@@ -1,3 +1,5 @@
+import {revisionText} from '../public/revision-text.js';
+import {mathSegments,mathTags} from '../public/math.js';
 // A minimal DOM test double for functional JS smoke tests. This is NOT a browser,
 // accessibility audit or visual/layout proof; tests/browser.js supplies those checks.
 import vm from 'node:vm';import fs from 'node:fs';import {dispatch} from './helpers.js';
@@ -33,15 +35,16 @@ class Node {
 class Doc extends Node {
  constructor(){super('document');this.document=this;this.body=this;this.activeElement=null;this.append(this.make('div','app'),this.make('div','toast'),this.make('div','modal-root'));}
  make(tag,id){const n=this.createElement(tag);n.setAttribute('id',id);return n;}
+ createElementNS(namespace,tag){return this.createElement(tag);}
  createElement(tag){const n=new Node(tag);n.document=this;return n;}
  createTextNode(text){const n=new Node('#text',text);n.document=this;return n;}
 }
 export async function clientHarness(app,options={}){
  const document=new Doc();const local=options.local||new Map();let cookie=options.cookie||'',hash=options.hash||'';const window=new Node('window');const location={get hash(){return hash;},set hash(v){hash=v.startsWith('#')?v:'#'+v;queueMicrotask(()=>window.emit('hashchange').catch(console.error));}};
- const sandbox={Node,document,window,location,navigator:{onLine:true},localStorage:{setItem:(k,v)=>local.set(k,v),getItem:k=>local.get(k)||null,removeItem:k=>local.delete(k)},console,URL,Date,Math,JSON,Set,Map,Error,Number,String,Boolean,Blob,crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,
+ const sandbox={revisionText,mathSegments,mathTags,Node,document,window,location,navigator:{onLine:true},localStorage:{setItem:(k,v)=>local.set(k,v),getItem:k=>local.get(k)||null,removeItem:k=>local.delete(k)},console,URL,Date,Math,JSON,Set,Map,Error,Number,String,Boolean,Blob,crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,
   FormData:class {constructor(form){this.fields=Object.fromEntries(form.querySelectorAll('input,textarea,select').map(n=>[n.attrs.name,n.value]));}get(k){return this.fields[k];}},
   fetch:async(url,options={})=>{const r=await dispatch(app,{url,method:options.method,headers:{...options.headers,...(cookie?{cookie}:{}),...(options.method&&options.method!=='GET'?{origin:'http://localhost:3000'}:{})},body:options.body});if(r.headers['set-cookie'])cookie=r.headers['set-cookie'].split(';')[0];return {ok:r.status>=200&&r.status<300,status:r.status,json:async()=>r.json(),blob:async()=>new Blob([r.bytes],{type:r.headers['content-type']})};}
  };
- const source=fs.readFileSync('public/app.js','utf8');const context=vm.createContext(sandbox);await vm.runInContext(`(async()=>{${source}\nglobalThis.testAPI={state,newLesson,openRoute,saveNow,renderEditor,renderWizard,showVersions,showExport,reviewPlan,confirmRegenerate,closeModal};})()`,context);
+ const source=fs.readFileSync('public/app.js','utf8').replace(/^import .*?;\n/gm,'');const context=vm.createContext(sandbox);await vm.runInContext(`(async()=>{${source}\nglobalThis.testAPI={state,newLesson,openRoute,saveNow,renderEditor,renderWizard,showVersions,showExport,reviewPlan,confirmRegenerate,closeModal};})()`,context);
  return {document,api:context.testAPI,local,sessionCookie:()=>cookie,async flush(){await new Promise(r=>setTimeout(r,20));},field(label){const container=document.querySelectorAll('.field').find(n=>n.querySelector('label')?.textContent===label);return container?.querySelector('input,textarea,select');},button(text){return document.querySelectorAll('button').find(n=>n.textContent===text);}};
 }

@@ -6,3 +6,5 @@
 @media(max-width:700px){.rail{height:72px;padding:4px 2px;padding-bottom:max(4px,env(safe-area-inset-bottom))}.layout{padding-bottom:88px}.rail nav{gap:0}.navbtn{min-width:0;padding:4px 2px;min-height:44px;flex:1 1 0}.nav-label-full{display:none}.nav-label-short{display:block;font-size:.7rem;line-height:1.25;overflow-wrap:anywhere}.node-tools .btn{min-height:44px}.step{min-width:0;font-size:.75rem}.steps{gap:2px}.user>span:first-child{max-width:90px}.ilaw-tab strong{font-size:.75rem}.meta-note{font-size:.8125rem}.wizard-footer{position:sticky;bottom:72px;background:white;z-index:5}.modal-footer{padding-bottom:max(15px,env(safe-area-inset-bottom))}#toast{bottom:96px}.save-state{font-size:.875rem}}
 
 @media(max-width:700px){.rail{height:calc(72px + env(safe-area-inset-bottom))}.layout{padding-bottom:calc(88px + env(safe-area-inset-bottom))}.wizard-footer{bottom:calc(72px + env(safe-area-inset-bottom))}#toast{bottom:calc(96px + env(safe-area-inset-bottom))}}
+
+.math-preview{padding:12px 0;font-size:1.1rem;line-height:1.6;overflow-x:auto;white-space:pre-wrap}.math-preview math{margin:0 .2em}

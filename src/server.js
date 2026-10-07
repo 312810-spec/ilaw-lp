@@ -16,13 +16,14 @@ import {policySnapshot} from './policy.js';
 import {exportDOCX,exportHTML} from './exports.js';
 import {observationStore,observationExport} from './observations.js';
 import {exportPDF} from './pdf.js';
+import {exportPPTX,presentationStoryboard} from './presentations.js';
 import {bowCoverage,validateBOW} from './bow.js';
 const scryptAsync=promisify(scrypt);const hash=s=>createHash('sha256').update(s).digest('hex');
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../public');
 const exportName=plan=>`ILAW-Grade-${plan.input.grade}-${(plan.input.subject+'-'+plan.title).normalize('NFKD').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,110)||'Lesson'}`;
 const now=()=>new Date().toISOString();
 const statusError=(status,message)=>Object.assign(Error(message),{status});
-const publicFiles=new Set(['index.html','app.js','styles.css','favicon.svg','print.css','print.js','manifest.webmanifest']);
+const publicFiles=new Set(['index.html','app.js','math.js','revision-text.js','styles.css','favicon.svg','print.css','print.js','manifest.webmanifest']);
 export async function createApp({database,provider=new AIProvider(),host=process.env.HOST||'127.0.0.1',port=Number(process.env.PORT||3000),socketPath=process.env.ILAW_SOCKET}={}){
  const storage=database||openDatabase();const {db,getPlan,savePlan}=storage;const observations=observationStore(db);const records=loadCurriculum();const rates=new Map();const activeJobs=new Set();const controllers=new Map();const jobs=jobStore(storage);const cookieName='ilaw_session';
  const choices={gemini:{base:'https://generativelanguage.googleapis.com/v1beta/openai',model:'gemini-3.8-flash'},groq:{base:'https://api.groq.com/openai/v1',model:'openai/gpt-oss-120b'}};
@@ -138,7 +139,7 @@ export async function createApp({database,provider=new AIProvider(),host=process
     }
     const jobMatch=route.match(/^\/api\/jobs\/([a-f0-9-]{36})$/);
     if(jobMatch&&method==='GET'){jobs.recover();const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(jobMatch[1],user);if(!job)throw statusError(404,'Generation not found');send(res,200,{id:job.id,status:job.status,stage:job.stage,label:stageLabels[job.stage]||job.stage,planId:job.plan_id,error:job.error,usage:jobs.totals(job.id),input:['failed','cancelled'].includes(job.status)?JSON.parse(job.input):undefined});return;}
-    const planMatch=route.match(/^\/api\/plans\/([a-f0-9-]{36})(?:\/(revisions|restore|review|duplicate|regenerate|propose|proposal|accept|discard|retime|evidence|reflection|refine|docx|pdf|print))?$/);
+    const planMatch=route.match(/^\/api\/plans\/([a-f0-9-]{36})(?:\/(revisions|restore|review|duplicate|regenerate|propose|proposal|accept|discard|retime|evidence|reflection|refine|docx|pdf|pptx|storyboard|print))?$/);
     if(planMatch){const id=planMatch[1],action=planMatch[2];const plan=requirePlan(id,user);
      if(!action&&method==='GET'){plan.quality=qualityCheck(plan);send(res,200,{plan});return;}
      if(!action&&method==='PUT'){
@@ -201,6 +202,8 @@ export async function createApp({database,provider=new AIProvider(),host=process
      if(action==='retime'&&method==='POST'){
       const b=await readBody(req);checkRevision(plan,b.revision);const edited=retimePlan(plan,b.duration);edited.metadata.status='draft';edited.metadata.teacherReviewedAt=null;edited.quality=qualityCheck(edited);send(res,200,{plan:savePlan(edited,user,{expectedRevision:b.revision,label:`Retimed to ${b.duration} minutes; content preserved`})});return;
      }
+     if(action==='storyboard'&&method==='GET'){plan.quality=qualityCheck(plan);send(res,200,{storyboard:presentationStoryboard(plan)});return;}
+     if(action==='pptx'&&method==='GET'){plan.quality=qualityCheck(plan);const bytes=await exportPPTX(plan);res.writeHead(200,{'Content-Type':'application/vnd.openxmlformats-officedocument.presentationml.presentation','Content-Disposition':`attachment; filename="${exportName(plan)}.pptx"`,'Cache-Control':'no-store'});res.end(bytes);return;}
      if(action==='docx'&&method==='GET'){plan.quality=qualityCheck(plan);const options={detail:url.searchParams.get('detail')==='concise'?'concise':'expanded',materials:url.searchParams.get('materials')==='true'};const bytes=exportDOCX(plan,options);res.writeHead(200,{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Content-Disposition':`attachment; filename="${exportName(plan)}.docx"`,'Cache-Control':'no-store'});res.end(bytes);return;}
      if(action==='pdf'&&method==='GET'){plan.quality=qualityCheck(plan);const bytes=exportPDF(plan,{detail:url.searchParams.get('detail')==='concise'?'concise':'expanded',materials:url.searchParams.get('materials')==='true'});res.writeHead(200,{'Content-Type':'application/pdf','Content-Disposition':`attachment; filename="${exportName(plan)}.pdf"`,'Cache-Control':'no-store'});res.end(bytes);return;}
      if(action==='print'&&method==='GET'){plan.quality=qualityCheck(plan);res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(exportHTML(plan,{detail:url.searchParams.get('detail')==='concise'?'concise':'expanded',materials:url.searchParams.get('materials')==='true'}));return;}

@@ -1,5 +1,5 @@
 # ILAW
-Read README.md before changing architecture. Node 24; no production dependencies.
+Read README.md before changing architecture. Node 24; PptxGenJS is the isolated presentation-export dependency. See docs/architecture/classroom-export-adr.md before adding packages.
 Run `npm test` and `npm run check` after substantive changes.
 - Never call app defaults, practice examples, teacher input, or AI output official DepEd requirements.
 - Do not invent competency codes. Curriculum provenance is immutable during generation.

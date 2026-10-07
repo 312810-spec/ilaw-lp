@@ -1,14 +1,15 @@
 # ILAW — Teacher lesson-planning workspace
 
-A Node 24 / SQLite application for curriculum-grounded ILAW drafts, teacher edits, actual reflection, developmental observation/coaching and genuine Word/PDF exports. Current source gaps and validation limits are documented in [research implementation](docs/product/research-implementation.md).
+A Node 24 / SQLite application for curriculum-grounded ILAW drafts, teacher edits, actual reflection, developmental observation/coaching and genuine Word/PDF/PowerPoint exports. Current source gaps and validation limits are documented in [research implementation](docs/product/research-implementation.md).
 
 ## Run
 
 ```sh
+npm ci
 npm start
 ```
 
-Open `http://127.0.0.1:3000` and create the first teacher account. Node 24+ is required. No production packages or external database are needed. SQLite persists in `data/ilaw.sqlite`. Additional account registration requires administrator configuration `ILAW_REGISTRATION_ENABLED=true`; observers must have existing accounts before assignment. `.env` is loaded automatically; explicit environment values take precedence. Never commit credentials.
+Open `http://127.0.0.1:3000` and create the first teacher account. Node 24+ is required. PptxGenJS is pinned for editable PowerPoint export; no external database is needed. SQLite persists in `data/ilaw.sqlite`. Additional account registration requires administrator configuration `ILAW_REGISTRATION_ENABLED=true`; observers must have existing accounts before assignment. `.env` is loaded automatically; explicit environment values take precedence. Never commit credentials.
 
 ## Plan and teach
 
@@ -18,7 +19,7 @@ Open `http://127.0.0.1:3000` and create the first teacher account. Node 24+ is r
 4. Choose guided design or live AI, concise/detailed output and focused/KSA objectives. These are app preferences, not universal DepEd requirements.
 5. Edit ILAW sections; autosave, local recovery, optimistic revisions and history preserve teacher work. Targeted regeneration prepares a durable proposal: inspect Current / Proposed content, then accept or keep the current lesson. Proposals expire after 24 hours and cannot replace a newer saved revision.
 6. Use Classroom view while teaching. Enter actual aggregate evidence and post-lesson reflection separately from anticipated Ways Forward.
-7. Export the latest saved plan in concise/expanded DOCX or PDF. Companion tasks and answer keys come from the same accepted plan data. Separate teacher keys before distributing tasks.
+7. Export the latest saved plan in concise/expanded DOCX or PDF. Companion tasks and answer keys come from the same accepted plan data. Separate teacher keys before distributing tasks. Teacher-reviewed plans also export 16:9 editable PowerPoint slides, with teacher instructions and keys in speaker notes.
 
 Guided design uses five authored practice profiles. Other competencies receive an honest teacher-completed scaffold. It is not AI generation or an official curriculum catalog. Checks identify structural links, timing and resource issues; they do not certify subject correctness or DepEd compliance.
 
@@ -88,3 +89,9 @@ project. The [AI enhancement analysis](docs/product/forge-ai-enhancement-analysi
 compares three approaches and prioritizes reliable complete AI drafting,
 resumable recovery, teacher-friendly setup and content-quality validation.
 Runtime proposals in that analysis are not implementation claims.
+
+## Mathematical notation and classroom slides
+
+Use explicit `\( ... \)`, `\[ ... \]` or `$$ ... $$` delimiters for supported fractions, roots, scripts and common symbols. The editor and print preview use MathML; DOCX uses editable Office equations. PDF and PowerPoint use readable linear notation. Unsupported notation keeps its original source. This bounded renderer does not evaluate mathematical answers.
+
+PowerPoint uses the latest saved teacher-reviewed revision. Storyboard roles come from intentions, learner activities, assessment and reflection; teacher instructions, supports and keys are in speaker notes. Slides contain editable text, not screenshots. Review mathematical notation and classroom pacing before use. See [dependency decision](docs/architecture/classroom-export-adr.md).

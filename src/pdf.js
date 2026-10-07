@@ -1,3 +1,4 @@
+import {plainMath} from '../public/math.js';
 import fs from 'node:fs';
 import {deflateSync} from 'node:zlib';
 import {documentBlocks} from './exports.js';
@@ -16,7 +17,7 @@ function glyph(code){
 const width=code=>font.readUInt16BE(tables.hmtx+4*Math.min(glyph(code),metrics-1))/units*1000;
 const hex=n=>n.toString(16).padStart(4,'0');
 export function exportPDF(plan,options={}){
- const blocks=documentBlocks(plan,options);const characters=new Set('0123456789Page / ');
+ const blocks=documentBlocks(plan,options).map(block=>({...block,text:plainMath(block.text)}));const characters=new Set('0123456789Page / ');
  for(const b of blocks)for(const c of b.text.replace(/[\r\n\t]/g,' ')){if(!glyph(c.codePointAt(0)))throw new ValidationError(`PDF font does not support character U+${c.codePointAt(0).toString(16).toUpperCase()}. Use DOCX or browser print for this content.`);characters.add(c);}
  const chars=[...characters],cid=new Map(chars.map((c,i)=>[c,i+1]));const encode=s=>[...s].map(c=>hex(cid.get(c))).join('');
  const measure=(s,size)=>[...s].reduce((sum,c)=>sum+width(c.codePointAt(0))*size/1000,0);
