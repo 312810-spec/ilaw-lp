@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {scrypt,randomBytes,createHash,timingSafeEqual,createCipheriv,createDecipheriv} from 'node:crypto';
 import {promisify} from 'node:util';
 import {openDatabase} from './db.js';
+import {jobStore} from './jobs.js';
 import {normalizeInput,validateSessions,ValidationError,validate} from './schema.js';
 import {loadCurriculum,policySources,validateRecord,resolveCompetency} from './curriculum.js';
 import {generateGuided,regenerateGuided,retimePlan,stageLabels} from './engine.js';
@@ -23,9 +24,10 @@ const now=()=>new Date().toISOString();
 const statusError=(status,message)=>Object.assign(Error(message),{status});
 const publicFiles=new Set(['index.html','app.js','styles.css','favicon.svg','print.css','print.js','manifest.webmanifest']);
 export async function createApp({database,provider=new AIProvider(),host=process.env.HOST||'127.0.0.1',port=Number(process.env.PORT||3000),socketPath=process.env.ILAW_SOCKET}={}){
- const storage=database||openDatabase();const {db,getPlan,savePlan}=storage;const observations=observationStore(db);const records=loadCurriculum();const rates=new Map();const activeJobs=new Set();const cookieName='ilaw_session';
+ const storage=database||openDatabase();const {db,getPlan,savePlan}=storage;const observations=observationStore(db);const records=loadCurriculum();const rates=new Map();const activeJobs=new Set();const controllers=new Map();const jobs=jobStore(storage);const cookieName='ilaw_session';
  const choices={gemini:{base:'https://generativelanguage.googleapis.com/v1beta/openai',model:'gemini-3.8-flash'},groq:{base:'https://api.groq.com/openai/v1',model:'openai/gpt-oss-120b'}};
- const credentialStatus=user=>{const row=db.prepare('SELECT provider FROM ai_credentials WHERE user_id=?').get(user);return {provider:row?.provider||'gemini',configured:Boolean(row),aiAvailable:Boolean(row)||provider.available};};
+ const credentialFingerprint=user=>{const row=db.prepare('SELECT provider,secret FROM ai_credentials WHERE user_id=?').get(user);return hash(JSON.stringify(row||{base:provider.base,model:provider.fastModel,key:provider.key||''}));};
+ const credentialStatus=user=>{const row=db.prepare('SELECT provider FROM ai_credentials WHERE user_id=?').get(user);const probe=db.prepare('SELECT * FROM ai_probes WHERE user_id=?').get(user);const connection=probe&&probe.fingerprint===credentialFingerprint(user)?{testedAt:probe.tested_at,model:probe.model,success:Boolean(probe.success)}:null;return {provider:row?.provider||'gemini',configured:Boolean(row),aiAvailable:Boolean(row)||provider.available,connection};};
  const providerFor=user=>{const row=db.prepare('SELECT * FROM ai_credentials WHERE user_id=?').get(user);if(!row)return provider;const parts=row.secret.split('.').map(x=>Buffer.from(x,'base64'));const decipher=createDecipheriv('aes-256-gcm',storage.credentialKey,parts[0]);decipher.setAAD(Buffer.from(user));decipher.setAuthTag(parts[1]);const key=Buffer.concat([decipher.update(parts[2]),decipher.final()]).toString();const selected=choices[row.provider];return new AIProvider({key,base:selected.base,designModel:selected.model,fastModel:selected.model});};
  const publicOrigin=process.env.ILAW_PUBLIC_ORIGIN;
  if(!['127.0.0.1','localhost','::1'].includes(host)&&(!publicOrigin||!publicOrigin.startsWith('https://')))throw Error('External serving requires ILAW_PUBLIC_ORIGIN with HTTPS and a secure reverse proxy.');
@@ -38,17 +40,22 @@ export async function createApp({database,provider=new AIProvider(),host=process
  const requirePlan=(id,user)=>{const p=getPlan(id,user);if(!p)throw statusError(404,'Lesson not found');return p;};
  const checkRevision=(plan,revision)=>{if(!Number.isInteger(revision)||plan.revision!==revision)throw statusError(409,'This lesson has a newer revision. Reload the latest version before saving. Your current edits remain in recovery.');};
  const makeJob=async(job,input,user)=>{
-  activeJobs.add(job);
-  const stage=async name=>{db.prepare("UPDATE jobs SET status='running',stage=?,updated_at=? WHERE id=?").run(name,now(),job);await new Promise(resolve=>setImmediate(resolve));};
-  try{const jobRecords=curriculumFor(user),jobProvider=providerFor(user);
+  try{jobs.ensure(job);}catch{return;}
+  activeJobs.add(job);const controller=new AbortController();controllers.set(job,controller);
+  const heartbeat=setInterval(()=>{try{jobs.heartbeat(job);}catch{controller.abort();}},10000);heartbeat.unref();
+  const stage=async name=>{controller.signal.throwIfAborted();jobs.stage(job,name);await new Promise(resolve=>setImmediate(resolve));};
+  try{const jobRecords=curriculumFor(user),jobProvider=Object.create(providerFor(user));
+   jobProvider.signal=controller.signal;jobProvider.onAttempt=async()=>jobs.attempt(job);jobProvider.onUsage=async value=>jobs.usage(job,value);
    const fingerprint=hash(JSON.stringify({contract:'staged-retention-v1',input,source:resolveCompetency(input,jobRecords),models:[jobProvider.base,jobProvider.designModel,jobProvider.fastModel]}));
    const row=db.prepare('SELECT * FROM job_checkpoints WHERE job_id=?').get(job);
    if(row&&(row.fingerprint!==fingerprint||Date.now()-Date.parse(row.updated_at)>7*24*3600000))throw statusError(409,'Retained stages expired or their source/model changed. Review input and start a new generation.');
    const parts=row?JSON.parse(row.payload):{};
-   const checkpoint={...(row?{parts}:{}),save:async(name,result)=>{parts[name]=result;db.prepare('INSERT INTO job_checkpoints VALUES (?,?,?,?) ON CONFLICT(job_id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').run(job,fingerprint,JSON.stringify(parts),now());}};
-   const options={records:jobRecords,provider:jobProvider,onStage:stage,checkpoint};const plan=input.mode==='ai'?await generateAI(input,options):await generateGuided(input,options);await stage('save');savePlan(plan,user,{isNew:true,label:plan.metadata.origin,onSaved:saved=>{db.prepare("UPDATE jobs SET status='completed',stage='save',plan_id=?,error=NULL,updated_at=? WHERE id=?").run(saved.id,now(),job);db.prepare('DELETE FROM job_checkpoints WHERE job_id=?').run(job);}});}
-  catch(e){db.prepare("UPDATE jobs SET status='failed',error=?,updated_at=? WHERE id=?").run(e.status?e.message:'Generation failed safely. Your input is preserved; retry.',now(),job);console.error(`generation_failed: ${e.name}`);}
-  finally{activeJobs.delete(job);}
+   const checkpoint={...(row?{parts}:{}),save:async(name,result)=>storage.transaction(()=>{jobs.ensure(job);parts[name]=result;db.prepare('INSERT INTO job_checkpoints VALUES (?,?,?,?) ON CONFLICT(job_id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').run(job,fingerprint,JSON.stringify(parts),now());})};
+   const options={records:jobRecords,provider:jobProvider,onStage:stage,checkpoint};const plan=input.mode==='ai'?await generateAI(input,options):await generateGuided(input,options);await stage('save');
+   if(input.mode==='ai')plan.metadata.tokens=jobs.totals(job);
+   savePlan(plan,user,{isNew:true,label:plan.metadata.origin,onSaved:saved=>{jobs.ensure(job);db.prepare("UPDATE jobs SET status='completed',stage='save',plan_id=?,error=NULL,updated_at=? WHERE id=?").run(saved.id,now(),job);db.prepare('DELETE FROM job_checkpoints WHERE job_id=?').run(job);jobs.release(job);}});
+  }catch(e){try{storage.transaction(()=>{jobs.ensure(job);db.prepare("UPDATE jobs SET status='failed',error=?,updated_at=? WHERE id=?").run(e.status?e.message:'Generation failed safely. Your input is preserved; resume when ready.',now(),job);});console.error(`generation_failed: ${e.name}`);}catch{/* Cancelled or replaced workers cannot overwrite job state. */}}
+  finally{clearInterval(heartbeat);jobs.release(job);controllers.delete(job);activeJobs.delete(job);}
  };
  const server=http.createServer(async(req,res)=>{
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");if(publicOrigin)res.setHeader('Strict-Transport-Security','max-age=31536000');
@@ -83,13 +90,14 @@ export async function createApp({database,provider=new AIProvider(),host=process
     if(route==='/api/account/ai'&&method==='GET'){send(res,200,credentialStatus(user));return;}
     if(route==='/api/account/ai'&&method==='PUT'){
      const b=await readBody(req);if(!Object.hasOwn(choices,b.provider)||typeof b.apiKey!=='string'||b.apiKey.trim().length<10||b.apiKey.length>4096||/[\s\x00-\x1f\x7f]/.test(b.apiKey.trim()))throw new ValidationError('Choose Gemini or Groq and enter a valid API key.');
-     const iv=randomBytes(12);const cipher=createCipheriv('aes-256-gcm',storage.credentialKey,iv);cipher.setAAD(Buffer.from(user));const encrypted=Buffer.concat([cipher.update(b.apiKey.trim(),'utf8'),cipher.final()]);const secret=[iv,cipher.getAuthTag(),encrypted].map(x=>x.toString('base64')).join('.');db.prepare('INSERT INTO ai_credentials VALUES (?,?,?) ON CONFLICT(user_id) DO UPDATE SET provider=excluded.provider,secret=excluded.secret').run(user,b.provider,secret);send(res,200,credentialStatus(user));return;
+     const iv=randomBytes(12);const cipher=createCipheriv('aes-256-gcm',storage.credentialKey,iv);cipher.setAAD(Buffer.from(user));const encrypted=Buffer.concat([cipher.update(b.apiKey.trim(),'utf8'),cipher.final()]);const secret=[iv,cipher.getAuthTag(),encrypted].map(x=>x.toString('base64')).join('.');db.prepare('INSERT INTO ai_credentials VALUES (?,?,?) ON CONFLICT(user_id) DO UPDATE SET provider=excluded.provider,secret=excluded.secret').run(user,b.provider,secret);db.prepare('DELETE FROM ai_probes WHERE user_id=?').run(user);send(res,200,credentialStatus(user));return;
     }
     if(route==='/api/account/ai/test'&&method==='POST'){
      limit(`provider-test:${user}`,3,60000);const configured=providerFor(user);if(!configured.available)throw statusError(503,'Save a provider key first');
-     const result=await configured.generateStructured({stage:'connection',schema:{type:'object',properties:{message:{type:'string',minLength:1,maxLength:200}},required:['message'],additionalProperties:false},context:{},instruction:'Return a short connection acknowledgment only. No lesson or personal data is supplied.',strong:false});send(res,200,{ok:true,model:result.model,notice:'Connection and structured response succeeded. Lesson accuracy is not established.'});return;
+     const fingerprint=credentialFingerprint(user);const saveProbe=success=>{if(fingerprint===credentialFingerprint(user))db.prepare('INSERT INTO ai_probes VALUES (?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET fingerprint=excluded.fingerprint,model=excluded.model,tested_at=excluded.tested_at,success=excluded.success').run(user,fingerprint,configured.fastModel,now(),success?1:0);};
+     try{const result=await configured.generateStructured({stage:'connection',schema:{type:'object',properties:{message:{type:'string',minLength:1,maxLength:200}},required:['message'],additionalProperties:false},context:{},instruction:'Return a short connection acknowledgment only. No lesson or personal data is supplied.',strong:false});saveProbe(true);send(res,200,{ok:true,model:result.model,notice:'Connection and structured response succeeded. Lesson accuracy is not established.'});}catch(e){saveProbe(false);throw e;}return;
     }
-    if(route==='/api/account/ai'&&method==='DELETE'){db.prepare('DELETE FROM ai_credentials WHERE user_id=?').run(user);send(res,200,credentialStatus(user));return;}
+    if(route==='/api/account/ai'&&method==='DELETE'){db.prepare('DELETE FROM ai_credentials WHERE user_id=?').run(user);db.prepare('DELETE FROM ai_probes WHERE user_id=?').run(user);send(res,200,credentialStatus(user));return;}
     if(route==='/api/auth/logout'&&method==='POST'){db.prepare('DELETE FROM sessions WHERE token_hash=?').run(session.token_hash);res.setHeader('Set-Cookie',`${cookieName}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${publicOrigin?'; Secure':''}`);send(res,200,{ok:true});return;}
     if(route==='/api/curriculum'&&method==='GET'){const available=curriculumFor(user);send(res,200,{records:available,policySources,budgetsOfWork:bowCoverage(available)});return;}
     if(route==='/api/curriculum/bulk'&&method==='POST'){
@@ -117,22 +125,19 @@ export async function createApp({database,provider=new AIProvider(),host=process
     }
     if(route==='/api/jobs'&&method==='POST'){
      const input=normalizeInput(await readBody(req));resolveCompetency(input,curriculumFor(user));if(input.mode==='ai'&&!providerFor(user).available)throw statusError(503,'Live AI is not configured. Select guided design, or configure a server-side provider credential.');
-     const active=db.prepare("SELECT count(*) n FROM jobs WHERE user_id=? AND status IN ('queued','running')").get(user).n;if(active)throw statusError(409,'A lesson is already being generated. Open the active generation.');
-     if(activeJobs.size>=3)throw statusError(429,'The generation queue is busy. Try again shortly.');limit(`generation:${user}`,8,3600000);
-     const id=crypto.randomUUID();db.prepare('INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?,?)').run(id,user,'queued','resolve',JSON.stringify(input),null,null,now(),now());
+     jobs.recover();limit(`generation:${user}`,8,3600000);const id=crypto.randomUUID();jobs.reserve(id,user,input);
      send(res,202,{jobId:id});setImmediate(()=>makeJob(id,input,user));return;
     }
-    const resumeMatch=route.match(/^\/api\/jobs\/([a-f0-9-]{36})\/resume$/);
-    if(resumeMatch&&method==='POST'){
-     const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(resumeMatch[1],user);if(!job)throw statusError(404,'Generation not found');
-     if(job.status==='completed'){send(res,200,{jobId:job.id});return;}
-     if(job.status!=='failed'||activeJobs.has(job.id)||db.prepare("SELECT count(*) n FROM jobs WHERE user_id=? AND status IN ('queued','running')").get(user).n)throw statusError(409,'Generation is already active.');
-     if(activeJobs.size>=3)throw statusError(429,'The generation queue is busy.');limit(`generation:${user}`,8,3600000);
-     db.prepare("UPDATE jobs SET status='queued',error=NULL,updated_at=? WHERE id=? AND status='failed'").run(now(),job.id);
-     send(res,202,{jobId:job.id});setImmediate(()=>makeJob(job.id,JSON.parse(job.input),user));return;
+    const actionMatch=route.match(/^\/api\/jobs\/([a-f0-9-]{36})\/(resume|cancel)$/);
+    if(actionMatch&&method==='POST'){
+     jobs.recover();const id=actionMatch[1];const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(id,user);if(!job)throw statusError(404,'Generation not found');
+     if(actionMatch[2]==='cancel'){jobs.cancel(id,user);controllers.get(id)?.abort();send(res,200,{jobId:id,status:'cancelled'});return;}
+     if(job.status==='completed'){send(res,200,{jobId:id});return;}
+     if(activeJobs.has(id))throw statusError(409,'Previous worker is stopping. Try resume shortly.');limit(`generation:${user}`,8,3600000);jobs.reserve(id,user,null,{resume:true});
+     send(res,202,{jobId:id});setImmediate(()=>makeJob(id,JSON.parse(job.input),user));return;
     }
     const jobMatch=route.match(/^\/api\/jobs\/([a-f0-9-]{36})$/);
-    if(jobMatch&&method==='GET'){const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(jobMatch[1],user);if(!job)throw statusError(404,'Generation not found');send(res,200,{id:job.id,status:job.status,stage:job.stage,label:stageLabels[job.stage]||job.stage,planId:job.plan_id,error:job.error,input:job.status==='failed'?JSON.parse(job.input):undefined});return;}
+    if(jobMatch&&method==='GET'){jobs.recover();const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(jobMatch[1],user);if(!job)throw statusError(404,'Generation not found');send(res,200,{id:job.id,status:job.status,stage:job.stage,label:stageLabels[job.stage]||job.stage,planId:job.plan_id,error:job.error,usage:jobs.totals(job.id),input:['failed','cancelled'].includes(job.status)?JSON.parse(job.input):undefined});return;}
     const planMatch=route.match(/^\/api\/plans\/([a-f0-9-]{36})(?:\/(revisions|restore|review|duplicate|regenerate|retime|evidence|reflection|refine|docx|pdf|print))?$/);
     if(planMatch){const id=planMatch[1],action=planMatch[2];const plan=requirePlan(id,user);
      if(!action&&method==='GET'){plan.quality=qualityCheck(plan);send(res,200,{plan});return;}
