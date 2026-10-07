@@ -1,3 +1,5 @@
+import {normalizePNG} from './images.js';
+import {exportImages,imageCaption} from './export-images.js';
 import {plainMath} from '../public/math.js';
 import fs from 'node:fs';
 import {deflateSync} from 'node:zlib';
@@ -17,7 +19,8 @@ function glyph(code){
 const width=code=>font.readUInt16BE(tables.hmtx+4*Math.min(glyph(code),metrics-1))/units*1000;
 const hex=n=>n.toString(16).padStart(4,'0');
 export function exportPDF(plan,options={}){
- const blocks=documentBlocks(plan,options).map(block=>({...block,text:plainMath(block.text)}));const characters=new Set('0123456789Page / ');
+ const images=exportImages(plan,options).map(a=>({...a,...normalizePNG(a.data)}));
+ const blocks=[...documentBlocks(plan,options),...images.map(a=>({style:'Normal',text:imageCaption(a)}))].map(block=>({...block,text:plainMath(block.text)}));const characters=new Set('0123456789Page / ');
  for(const b of blocks)for(const c of b.text.replace(/[\r\n\t]/g,' ')){if(!glyph(c.codePointAt(0)))throw new ValidationError(`PDF font does not support character U+${c.codePointAt(0).toString(16).toUpperCase()}. Use DOCX or browser print for this content.`);characters.add(c);}
  const chars=[...characters],cid=new Map(chars.map((c,i)=>[c,i+1]));const encode=s=>[...s].map(c=>hex(cid.get(c))).join('');
  const measure=(s,size)=>[...s].reduce((sum,c)=>sum+width(c.codePointAt(0))*size/1000,0);
@@ -26,6 +29,7 @@ export function exportPDF(plan,options={}){
  for(const b of blocks){const size=({Title:20,Heading1:16,Heading2:13,Heading3:11.5})[b.style]||10.5,leading=size*1.45;const lines=wrap(b.text,size);if(b.style!=='Normal'){if(y<46+leading*3)flush();y-=8;}
   for(const line of lines){if(y<55+leading)flush();commands.push(`BT /F1 ${size} Tf 1 0 0 1 46 ${y.toFixed(2)} Tm <${encode(line)}> Tj ET`);y-=leading;}y-=5;
  }if(commands.length)flush();
+ for(const [i,image] of images.entries()){const scale=Math.min(503/image.width,680/image.height);const w=image.width*scale,h=image.height*scale;pages.push(`q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} 46 ${(796-h).toFixed(2)} cm /Im${i} Do Q`);}
  const objects=[];const reserve=()=>{objects.push(null);return objects.length;};const set=(id,bytes)=>objects[id-1]=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes);const add=bytes=>{const id=reserve();set(id,bytes);return id;};
  const stream=(bytes,extra='')=>{const compressed=deflateSync(bytes);return Buffer.concat([Buffer.from(`<< /Length ${compressed.length} /Filter /FlateDecode ${extra} >>\nstream\n`),compressed,Buffer.from('\nendstream')]);};
  const catalog=reserve(),pageTree=reserve();const fontFile=add(stream(font,`/Length1 ${font.length}`));
@@ -36,7 +40,8 @@ export function exportPDF(plan,options={}){
  const mappings=chars.map((c,i)=>`<${hex(i+1)}> <${Buffer.from(c,'utf16le').swap16().toString('hex')}>`);const groups=[];for(let i=0;i<mappings.length;i+=100){const group=mappings.slice(i,i+100);groups.push(`${group.length} beginbfchar\n${group.join('\n')}\nendbfchar`);}
  const unicode=add(stream(Buffer.from(`/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def /CMapName /ILAWUnicode def /CMapType 2 def 1 begincodespacerange <0000> <FFFF> endcodespacerange\n${groups.join('\n')}\nendcmap CMapName currentdict /CMap defineresource pop end end`)));
  const type0=add(`<< /Type /Font /Subtype /Type0 /BaseFont /DejaVuSans /Encoding /Identity-H /DescendantFonts [${descendant} 0 R] /ToUnicode ${unicode} 0 R >>`);
- const pageIds=pages.map((content,i)=>{content+=`\nBT /F1 9 Tf 1 0 0 1 46 30 Tm <${encode(`Page ${i+1} / ${pages.length}`)}> Tj ET`;const contents=add(stream(Buffer.from(content)));return add(`<< /Type /Page /Parent ${pageTree} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${type0} 0 R >> >> /Contents ${contents} 0 R >>`);});
+ const imageObjects=images.map(image=>add(stream(image.rgb,`/Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height} /ColorSpace /DeviceRGB /BitsPerComponent 8`)));
+ const pageIds=pages.map((content,i)=>{content+=`\nBT /F1 9 Tf 1 0 0 1 46 30 Tm <${encode(`Page ${i+1} / ${pages.length}`)}> Tj ET`;const contents=add(stream(Buffer.from(content)));return add(`<< /Type /Page /Parent ${pageTree} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${type0} 0 R >> /XObject << ${imageObjects.map((id,n)=>`/Im${n} ${id} 0 R`).join(' ')} >> >> /Contents ${contents} 0 R >>`);});
  set(pageTree,`<< /Type /Pages /Count ${pageIds.length} /Kids [${pageIds.map(id=>id+' 0 R').join(' ')}] >>`);set(catalog,`<< /Type /Catalog /Pages ${pageTree} 0 R >>`);
  const chunks=[Buffer.from('%PDF-1.7\n%\xE2\xE3\xCF\xD3\n','latin1')],offsets=[0];let position=chunks[0].length;objects.forEach((value,i)=>{offsets.push(position);const chunk=Buffer.concat([Buffer.from(`${i+1} 0 obj\n`),value,Buffer.from('\nendobj\n')]);chunks.push(chunk);position+=chunk.length;});
  chunks.push(Buffer.from(`xref\n0 ${objects.length+1}\n0000000000 65535 f \n${offsets.slice(1).map(n=>String(n).padStart(10,'0')+' 00000 n \n').join('')}trailer\n<< /Size ${objects.length+1} /Root ${catalog} 0 R >>\nstartxref\n${position}\n%%EOF\n`));return Buffer.concat(chunks);

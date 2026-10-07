@@ -1,7 +1,9 @@
 import {ValidationError} from './schema.js';
+import {loadObservationTools,preparationMappings} from './observation-tools.js';
 const error=(status,message)=>Object.assign(Error(message),{status});
 const text=(value,label,max=2000)=>{if(typeof value!=='string'||value.length>max)throw new ValidationError(`${label} must be text of at most ${max} characters`);return value.trim();};
 export function observationStore(db){
+ const tools=loadObservationTools();
  db.exec(`CREATE TABLE IF NOT EXISTS observations(id TEXT PRIMARY KEY,owner_id TEXT NOT NULL REFERENCES users(id),observer_id TEXT REFERENCES users(id),revision INTEGER NOT NULL,payload TEXT NOT NULL,modified_at TEXT NOT NULL);
  CREATE INDEX IF NOT EXISTS observation_owner ON observations(owner_id,modified_at);
  CREATE INDEX IF NOT EXISTS observation_observer ON observations(observer_id,modified_at);
@@ -44,6 +46,7 @@ export function observationStore(db){
     const activityId=text(body.activityId||'','Activity reference',60);if(activityId&&!o.snapshot.sessions.some(s=>s.experiences.some(a=>a.id===activityId)))throw new ValidationError('Activity is not in the observation snapshot');
     const amends=body.amends||null;if(amends&&!o.notes.some(n=>n.id===amends&&n.authorId===user))throw new ValidationError('Amend only your own existing note');
     o.notes.push({id:crypto.randomUUID(),authorId:user,kind:body.kind,text:content,interpretation,activityId,amends,recordedAt:new Date().toISOString()});
+   }else if(body.action==='preparation'){if(user!==o.ownerId)throw error(403,'Only the teacher can confirm preparation mappings');o.preparation=preparationMappings(o.snapshot,body,tools);
    }else if(body.action==='reflection'){if(user!==o.ownerId)throw error(403,'Only the teacher can write the reflection');o.reflection=text(body.text,'Teacher reflection',4000);
    }else if(body.action==='coaching'){
     o.coaching={};for(const k of ['strengths','nextStep','support'])o.coaching[k]=text(body[k],k);o.coaching.followUpDate=text(body.followUpDate||'','Follow-up date',10);if(o.coaching.followUpDate&&!/^\d{4}-\d{2}-\d{2}$/.test(o.coaching.followUpDate))throw new ValidationError('Follow-up date must use YYYY-MM-DD');
@@ -57,5 +60,6 @@ export function observationStore(db){
 export function observationExport(o){
  const escape=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const rows=[['Observation / coaching',o.snapshot.title],['Purpose',o.purpose],['Status',o.status],['Scope',o.notice],['Focus',o.focus],['Schedule',o.scheduledAt],['Lesson snapshot',`Revision ${o.planRevision}; Grade ${o.snapshot.input.grade} ${o.snapshot.input.subject}`],...o.notes.flatMap(n=>[[`${n.kind} · ${n.recordedAt}${n.amends?' · amendment':''}`,n.text],['Interpretation',n.interpretation]]),['Teacher reflection',o.reflection],['Strengths',o.coaching.strengths],['Next step',o.coaching.nextStep],['Support',o.coaching.support],['Follow-up',o.coaching.followUpDate]];
+ for(const m of o.preparation||[])rows.push(['Planned preparation opportunity',`${m.activityId}: ${m.indicatorWording}`],['Intended teacher action',m.teacherAction],['Anticipated learner evidence',m.anticipatedEvidence],['Rationale',m.rationale],['Reviewed tool',`${m.toolId} ${m.toolVersion}; ${m.signedSourceURL}`]);
  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Observation</title><link rel="stylesheet" href="/print.css"><script src="/print.js" defer></script></head><body><nav><button id="print">Print / Save as PDF</button></nav><main>${rows.map(([k,v])=>`<h3>${escape(k)}</h3><p>${escape(v)}</p>`).join('')}</main></body></html>`;
 }

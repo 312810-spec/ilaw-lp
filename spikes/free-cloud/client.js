@@ -1,0 +1,7 @@
+// Proof-of-contract only; not wired into the SQLite production application.
+export function cloudClient({url,publishableKey,accessToken,fetchImpl=fetch}){
+ const origin=new URL(url);if(origin.protocol!=='https:'||origin.username||origin.password||origin.pathname!=='/')throw Error('Use the HTTPS project origin');
+ if(!publishableKey||!accessToken)throw Error('A publishable key and authenticated user token are required');
+ const request=async(path,options={})=>{const response=await fetchImpl(origin.origin+'/rest/v1/'+path,{...options,headers:{apikey:publishableKey,Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},signal:AbortSignal.timeout(15000)});if(!response.ok){let code;try{code=(await response.json()).code;}catch{}throw Object.assign(Error(code==='40001'?'Revision conflict; preserve the device draft and reload the accepted plan.':'Cloud request failed; preserve the device draft.'),{status:response.status,code});}return response.json();};
+ return {list:()=>request('ilaw_cloud_plans?select=id,revision,modified_at&order=modified_at.desc&limit=100'),save:(plan,expectedRevision)=>request('rpc/ilaw_save_plan',{method:'POST',body:JSON.stringify({plan_id:plan.id,expected_revision:expectedRevision,plan_payload:plan})}),history:id=>{if(!/^[a-f0-9-]{36}$/.test(id))throw Error('Invalid plan id');return request(`ilaw_cloud_revisions?plan_id=eq.${id}&select=revision,payload,created_at&order=revision.desc&limit=100`);}};
+}

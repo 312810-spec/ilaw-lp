@@ -8,6 +8,7 @@ export function validateBOW(record,validateRecord,operator=true){
  for(const field of ['schoolYear','curriculumVersion'])if(typeof record[field]!=='string'||!record[field].trim())throw new ValidationError(`BOW ${field} is required`);
  if(!['Term 1','Term 2','Term 3'].includes(record.term))throw new ValidationError('BOW term must be Term 1, Term 2 or Term 3');
  if(record.week!=null&&(!Number.isInteger(record.week)||record.week<1||record.week>52))throw new ValidationError('BOW week must be an exact source week or null');
+ if(record.weekStart!=null||record.weekEnd!=null){if(record.week!=null||![record.weekStart,record.weekEnd].every(n=>Number.isInteger(n)&&n>=1&&n<=52)||record.weekStart>record.weekEnd)throw new ValidationError('Use an exact source week or a valid inclusive source-week range');}
  if(typeof record.source.reviewer!=='string'||!record.source.reviewer.trim())throw new ValidationError('BOW reviewer is required');
  for(const field of ['contentStandard','performanceStandard'])if(record[field]&&!record.source.excerpt.includes(record[field]))throw new ValidationError(`BOW ${field} must occur verbatim in its source excerpt`);
  return record;
@@ -18,6 +19,7 @@ export function loadBOW(validateRecord){
  const ids=new Set();for(const row of rows){validateBOW(row,validateRecord);if(ids.has(row.id))throw new ValidationError('Duplicate BOW id');ids.add(row.id);}return rows;
 }
 export function matchesBOW(record,input){
- return record.grade===Number(input.grade)&&record.subject===input.subject&&record.curriculum===input.curriculum&&record.schoolYear.replace(/[–—]/g,'-')===input.schoolYear.replace(/[–—]/g,'-')&&record.term===input.term&&(record.week==null||record.week===Number(input.week));
+ const week=Number(input.week);const mapped=record.weekMapping==='unspecified'?false:record.weekStart!=null?week>=record.weekStart&&week<=record.weekEnd:record.week==null||record.week===week;
+ return record.grade===Number(input.grade)&&record.subject===input.subject&&record.curriculum===input.curriculum&&record.schoolYear.replace(/[–—]/g,'-')===String(input.schoolYear||'').replace(/[–—]/g,'-')&&record.term===input.term&&mapped;
 }
 export function bowCoverage(records){return bowDirectory.map(source=>({...source,verifiedRows:records.filter(r=>r.kind==='budget-of-work'&&r.grade===source.grade&&r.source.status==='verified').length,teacherConfirmedRows:records.filter(r=>r.kind==='budget-of-work'&&r.grade===source.grade&&r.source.status==='teacher-confirmed').length,importedRows:records.filter(r=>r.kind==='budget-of-work'&&r.grade===source.grade).length}));}

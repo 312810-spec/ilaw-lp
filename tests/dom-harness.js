@@ -1,3 +1,11 @@
+import {downloadDraft} from '../public/device-recovery.js';
+import {showPreparation} from '../public/preparation-editor.js';
+import {showClassAdaptation} from '../public/class-adaptation.js';
+import {showSourceQueue} from '../public/source-queue.js';
+import {showAssetEditor} from '../public/asset-editor.js';
+import {showExportDialog} from '../public/export-dialog.js';
+import {showMathCheck} from '../public/teacher-tools.js';
+import {showStoryboardEditor} from '../public/storyboard-editor.js';
 import {technicalControls} from '../public/technical-controls.js';
 import {revisionText} from '../public/revision-text.js';
 import {mathSegments,mathTags} from '../public/math.js';
@@ -42,7 +50,7 @@ class Doc extends Node {
 }
 export async function clientHarness(app,options={}){
  const document=new Doc();const local=options.local||new Map();let cookie=options.cookie||'',hash=options.hash||'';const window=new Node('window');const location={get hash(){return hash;},set hash(v){hash=v.startsWith('#')?v:'#'+v;queueMicrotask(()=>window.emit('hashchange').catch(console.error));}};
- const sandbox={technicalControls,revisionText,mathSegments,mathTags,Node,document,window,location,navigator:{onLine:true},localStorage:{setItem:(k,v)=>local.set(k,v),getItem:k=>local.get(k)||null,removeItem:k=>local.delete(k)},console,URL,Date,Math,JSON,Set,Map,Error,Number,String,Boolean,Blob,crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,
+ const sandbox={initializeRecovery:async()=>{},recoveryGet:k=>{try{return JSON.parse(local.get(k));}catch{return null;}},recoveryPut:(k,v)=>local.set(k,JSON.stringify(v)),recoveryRemove:k=>local.delete(k),downloadDraft,showPreparation,showClassAdaptation,showSourceQueue,showAssetEditor,showExportDialog,showMathCheck,showStoryboardEditor,technicalControls,revisionText,mathSegments,mathTags,Node,document,window,location,navigator:{onLine:true},localStorage:{setItem:(k,v)=>local.set(k,v),getItem:k=>local.get(k)||null,removeItem:k=>local.delete(k)},console,URL,Date,Math,JSON,Set,Map,Error,Number,String,Boolean,Blob,crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,
   FormData:class {constructor(form){this.fields=Object.fromEntries(form.querySelectorAll('input,textarea,select').map(n=>[n.attrs.name,n.value]));}get(k){return this.fields[k];}},
   fetch:async(url,options={})=>{const r=await dispatch(app,{url,method:options.method,headers:{...options.headers,...(cookie?{cookie}:{}),...(options.method&&options.method!=='GET'?{origin:'http://localhost:3000'}:{})},body:options.body});if(r.headers['set-cookie'])cookie=r.headers['set-cookie'].split(';')[0];return {ok:r.status>=200&&r.status<300,status:r.status,json:async()=>r.json(),blob:async()=>new Blob([r.bytes],{type:r.headers['content-type']})};}
  };

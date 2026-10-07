@@ -23,6 +23,7 @@ export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sql
  if(filename===':memory:')credentialKey=randomBytes(32);else{try{fs.writeFileSync(secretPath,randomBytes(32),{flag:'wx',mode:0o600});}catch(e){if(e.code!=='EEXIST')throw e;}fs.chmodSync(secretPath,0o600);credentialKey=fs.readFileSync(secretPath);if(credentialKey.length!==32)throw Error('Invalid credential encryption key');}
  db.exec('CREATE TABLE IF NOT EXISTS ai_credentials (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, provider TEXT NOT NULL, secret TEXT NOT NULL)');
  db.exec('CREATE TABLE IF NOT EXISTS plan_proposals (id TEXT PRIMARY KEY, plan_id TEXT NOT NULL UNIQUE REFERENCES plans(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,base_revision INTEGER NOT NULL,payload TEXT NOT NULL,label TEXT NOT NULL,created_at TEXT NOT NULL)');
+ db.exec('CREATE TABLE IF NOT EXISTS plan_storyboards (plan_id TEXT PRIMARY KEY REFERENCES plans(id) ON DELETE CASCADE, version INTEGER NOT NULL, payload TEXT NOT NULL)');
  db.exec('CREATE TABLE IF NOT EXISTS ai_probes (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, fingerprint TEXT NOT NULL, model TEXT NOT NULL, tested_at TEXT NOT NULL, success INTEGER NOT NULL)');
  db.exec('CREATE TABLE IF NOT EXISTS job_checkpoints (job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
  const transaction=fn=>{db.exec('BEGIN IMMEDIATE');try{const v=fn();db.exec('COMMIT');return v;}catch(e){db.exec('ROLLBACK');throw e;}};
@@ -31,7 +32,7 @@ export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sql
   const r=db.prepare('SELECT revision FROM plans WHERE id=? AND user_id=?').get(plan.id,user);
   if(!r&&!isNew){const e=Error('Lesson not found');e.status=404;throw e;}
   if(r&&r.revision!==expectedRevision){const e=Error('This lesson has a newer revision. Your edits are preserved locally. Reload the latest version before saving.');e.status=409;throw e;}
-  const revision=r?r.revision+1:1;const now=new Date().toISOString();const payload={...plan,revision,metadata:{...plan.metadata,modifiedAt:now}};
+  const revision=r?r.revision+1:1;const now=new Date().toISOString();const payload={...plan,schemaVersion:1,revision,metadata:{...plan.metadata,modifiedAt:now}};
   const serialized=JSON.stringify(payload);if(serialized.length>350000){const e=Error('Lesson exceeds the supported document size');e.status=400;throw e;}
   if(r)db.prepare('UPDATE plans SET title=?,status=?,revision=?,payload=?,modified_at=? WHERE id=? AND user_id=?').run(plan.title,plan.metadata.status,revision,serialized,now,plan.id,user);
   else db.prepare('INSERT INTO plans (id,user_id,title,grade,subject,status,revision,payload,created_at,modified_at) VALUES (?,?,?,?,?,?,?,?,?,?)').run(plan.id,user,plan.title,plan.input.grade,plan.input.subject,plan.metadata.status,revision,serialized,now,now);

@@ -14,9 +14,12 @@
     "research": "node --use-env-proxy scripts/research.js",
     "test:e2e": "node tests/browser.js",
     "check:ai": "node --env-file-if-exists=.env --use-env-proxy scripts/ai-check.js",
-    "setup:browser": "node scripts/setup-browser.js"
+    "setup:browser": "node scripts/setup-browser.js",
+    "benchmark": "node --env-file-if-exists=.env --use-env-proxy scripts/benchmark.js",
+    "backup": "node scripts/backup.js"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "playwright": "1.62.1"
   },
   "dependencies": {

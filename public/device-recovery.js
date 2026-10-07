@@ -1,0 +1,10 @@
+// Best-effort browser recovery, separate from the accepted server revision.
+const cache=new Map();let db;
+export async function initializeRecovery(){
+ if(typeof indexedDB==='undefined')return;
+ try{db=await new Promise((resolve,reject)=>{const r=indexedDB.open('ilaw-device-recovery',1);r.onupgradeneeded=()=>r.result.createObjectStore('drafts');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('Recovery storage is blocked'));});await new Promise((resolve,reject)=>{const tx=db.transaction('drafts'),request=tx.objectStore('drafts').openCursor();request.onsuccess=()=>{const cursor=request.result;if(cursor){cache.set(cursor.key,cursor.value);cursor.continue();}};tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.onversionchange=()=>{db.close();db=null;};}catch{db=null;}
+}
+export function recoveryGet(key,storage=globalThis.localStorage){if(cache.has(key))return cache.get(key);try{return JSON.parse(storage.getItem(key));}catch{return null;}}
+export function recoveryPut(key,value,onFailure,storage=globalThis.localStorage){cache.set(key,structuredClone(value));let fallback=false;try{storage.setItem(key,JSON.stringify(value));fallback=true;}catch{}if(db){try{const tx=db.transaction('drafts','readwrite');tx.objectStore('drafts').put(value,key);tx.onerror=()=>{if(!fallback)onFailure?.();};tx.onabort=()=>{if(!fallback)onFailure?.();};}catch{if(!fallback)onFailure?.();}}else if(!fallback)onFailure?.();}
+export function recoveryRemove(key,storage=globalThis.localStorage){cache.delete(key);try{storage.removeItem(key);}catch{}if(db)try{db.transaction('drafts','readwrite').objectStore('drafts').delete(key);}catch{}}
+export function downloadDraft(plan,{document,URL,Blob,setTimeout}=globalThis){const safe={schemaVersion:1,kind:'ilaw-device-draft',exportedAt:new Date().toISOString(),plan};const url=URL.createObjectURL(new Blob([JSON.stringify(safe,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='ilaw-draft-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}

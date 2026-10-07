@@ -1,0 +1,785 @@
+{
+  "schemaVersion": 1,
+  "source": "DepEd Learning Systems official BOW directory",
+  "coverageComplete": false,
+  "grades": [
+    {
+      "grade": 0,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/kindergarten-and-grade-1",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:11.386Z",
+      "httpStatus": 200,
+      "contentHash": "77d0141d529fbe683cc4e579112fa46c2109299452f4543533eac9a691a916a7",
+      "files": [
+        {
+          "id": "1DlyDuW9oMwBCob8-_0GTM_MOnMnlw_Z9",
+          "url": "https://drive.google.com/file/d/1DlyDuW9oMwBCob8-_0GTM_MOnMnlw_Z9/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1KVHtpGH16_Jw8OoY0FV6xMSVsJURykGU",
+          "url": "https://drive.google.com/file/d/1KVHtpGH16_Jw8OoY0FV6xMSVsJURykGU/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "10nrskuIpAvP_sHnL8JccKXT09DBRkEiz",
+          "url": "https://drive.google.com/file/d/10nrskuIpAvP_sHnL8JccKXT09DBRkEiz/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Uz3P22FW9ITkT5bBxRdTC0gKitJVl1zR",
+          "url": "https://drive.google.com/file/d/1Uz3P22FW9ITkT5bBxRdTC0gKitJVl1zR/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1XDSYpvDn1SIS4Y73SRdYniQredKL4hsb",
+          "url": "https://drive.google.com/file/d/1XDSYpvDn1SIS4Y73SRdYniQredKL4hsb/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 1,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/kindergarten-and-grade-1",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:11.553Z",
+      "httpStatus": 200,
+      "contentHash": "09ff4ee4a3f87865ca1b30733faa13551aeb158d41cd2f357540416ae10e1097",
+      "files": [
+        {
+          "id": "1DlyDuW9oMwBCob8-_0GTM_MOnMnlw_Z9",
+          "url": "https://drive.google.com/file/d/1DlyDuW9oMwBCob8-_0GTM_MOnMnlw_Z9/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1KVHtpGH16_Jw8OoY0FV6xMSVsJURykGU",
+          "url": "https://drive.google.com/file/d/1KVHtpGH16_Jw8OoY0FV6xMSVsJURykGU/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "10nrskuIpAvP_sHnL8JccKXT09DBRkEiz",
+          "url": "https://drive.google.com/file/d/10nrskuIpAvP_sHnL8JccKXT09DBRkEiz/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Uz3P22FW9ITkT5bBxRdTC0gKitJVl1zR",
+          "url": "https://drive.google.com/file/d/1Uz3P22FW9ITkT5bBxRdTC0gKitJVl1zR/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1XDSYpvDn1SIS4Y73SRdYniQredKL4hsb",
+          "url": "https://drive.google.com/file/d/1XDSYpvDn1SIS4Y73SRdYniQredKL4hsb/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 2,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-2",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:11.712Z",
+      "httpStatus": 200,
+      "contentHash": "c31bec027765ce43b2c77901e38d35bad385ac011a83cf2c618c8e18cb23783f",
+      "files": [
+        {
+          "id": "1vFESsOrZC-hUpif4oG1cbfyUbKjpr6td",
+          "url": "https://drive.google.com/file/d/1vFESsOrZC-hUpif4oG1cbfyUbKjpr6td/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1sGyDxDjuc8kMZdI1xlILbXpBzQMvTSk5",
+          "url": "https://drive.google.com/file/d/1sGyDxDjuc8kMZdI1xlILbXpBzQMvTSk5/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1oqTcawgfjEgLu7adC8ILAJUWLcRkwtXS",
+          "url": "https://drive.google.com/file/d/1oqTcawgfjEgLu7adC8ILAJUWLcRkwtXS/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 3,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-3",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:11.841Z",
+      "httpStatus": 200,
+      "contentHash": "c899ad050cf4e390e1d24da242d5679a1218312d91ada7e5cf25598619b51bb9",
+      "files": [
+        {
+          "id": "1iUCKy7UGeZNjg96yEBt8T44w2VtUpd8W",
+          "url": "https://drive.google.com/file/d/1iUCKy7UGeZNjg96yEBt8T44w2VtUpd8W/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1_E-gxaUXBqXyvysUc1XjFMbZldWI1viB",
+          "url": "https://drive.google.com/file/d/1_E-gxaUXBqXyvysUc1XjFMbZldWI1viB/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1hHoRo9JGUNSfGtNZI_JhF6PTwR_NrG-O",
+          "url": "https://drive.google.com/file/d/1hHoRo9JGUNSfGtNZI_JhF6PTwR_NrG-O/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1-TCpRyBp62AjcqWPFET3Ds6kRfzeEV6x",
+          "url": "https://drive.google.com/file/d/1-TCpRyBp62AjcqWPFET3Ds6kRfzeEV6x/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 4,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-4",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:11.990Z",
+      "httpStatus": 200,
+      "contentHash": "ad3821a2603dc7ec3b90b6115db43c69c86375689ddef2fe925fa155666cc886",
+      "files": [
+        {
+          "id": "1nl9UF4GkOfC2pvZ6wNQ5V-LlQUux_4_Y",
+          "url": "https://drive.google.com/file/d/1nl9UF4GkOfC2pvZ6wNQ5V-LlQUux_4_Y/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1GYKgfIUBLHZBSYIqMnK9oQVLOgAuBjQ6",
+          "url": "https://drive.google.com/file/d/1GYKgfIUBLHZBSYIqMnK9oQVLOgAuBjQ6/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "15jIAuoe1CMlRfn4hJPARYfIKSA_RrJmd",
+          "url": "https://drive.google.com/file/d/15jIAuoe1CMlRfn4hJPARYfIKSA_RrJmd/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1EarKosKBiK0N5689JjMFw0z3mgFskg5z",
+          "url": "https://drive.google.com/file/d/1EarKosKBiK0N5689JjMFw0z3mgFskg5z/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1T8KbYGMHzL7T9gEzJ4sWoBshPKndFgqX",
+          "url": "https://drive.google.com/file/d/1T8KbYGMHzL7T9gEzJ4sWoBshPKndFgqX/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1sGZc5owQr_rmIjI92cparAHYrJ6QmMzr",
+          "url": "https://drive.google.com/file/d/1sGZc5owQr_rmIjI92cparAHYrJ6QmMzr/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1g9d7D3ltLNCLu-MCtxoFiZuxlsMf9-qd",
+          "url": "https://drive.google.com/file/d/1g9d7D3ltLNCLu-MCtxoFiZuxlsMf9-qd/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 5,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-5",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:12.149Z",
+      "httpStatus": 200,
+      "contentHash": "8b6f73df6186e055f5f30d6784a238938600da85588f3df7e00a62026693f456",
+      "files": [
+        {
+          "id": "1cF8cJMVNF1H-JGobkSaGPuzwZRbrMpIa",
+          "url": "https://drive.google.com/file/d/1cF8cJMVNF1H-JGobkSaGPuzwZRbrMpIa/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1RjozuT6_wxC5Is1d3DYQLdeJdd0TkV47",
+          "url": "https://drive.google.com/file/d/1RjozuT6_wxC5Is1d3DYQLdeJdd0TkV47/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1w7LuMUGmSJeMsTUrlx9PM4Ui2EvE9YP-",
+          "url": "https://drive.google.com/file/d/1w7LuMUGmSJeMsTUrlx9PM4Ui2EvE9YP-/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "15fvISxxtjMM3mgI0byyrDRKyo2BOYxNm",
+          "url": "https://drive.google.com/file/d/15fvISxxtjMM3mgI0byyrDRKyo2BOYxNm/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "18zaIknm6LaVcN6YDWdmxIL_y2mzPRbsy",
+          "url": "https://drive.google.com/file/d/18zaIknm6LaVcN6YDWdmxIL_y2mzPRbsy/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1IlLYSI1x8kuhbXiCCP5Q0CN9mZ63o07M",
+          "url": "https://drive.google.com/file/d/1IlLYSI1x8kuhbXiCCP5Q0CN9mZ63o07M/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 6,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-6",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:12.309Z",
+      "httpStatus": 200,
+      "contentHash": "fef9beb7486182cc3d0d86b82d178d397653445809494fd4b546593dab90adcb",
+      "files": [
+        {
+          "id": "1g5NuRjNKvUNBLwmvy0LDR-12m37LXFUD",
+          "url": "https://drive.google.com/file/d/1g5NuRjNKvUNBLwmvy0LDR-12m37LXFUD/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "17BxtMU-0zX4QSx8FDoHuWAoNvarobvUe",
+          "url": "https://drive.google.com/file/d/17BxtMU-0zX4QSx8FDoHuWAoNvarobvUe/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "18Mk3X3YTct91_7RrmpZ5Y7KUjt0YkiLw",
+          "url": "https://drive.google.com/file/d/18Mk3X3YTct91_7RrmpZ5Y7KUjt0YkiLw/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1gr6tiHtxDQV-zTTwCznL_0GxMZ5Vgd32",
+          "url": "https://drive.google.com/file/d/1gr6tiHtxDQV-zTTwCznL_0GxMZ5Vgd32/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1g4HkJghCOei2HcvJaVF900MwXH0yqh83",
+          "url": "https://drive.google.com/file/d/1g4HkJghCOei2HcvJaVF900MwXH0yqh83/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Df39nO1Tvy2-JuI9F9X0Vmp5Rw0eIuPl",
+          "url": "https://drive.google.com/file/d/1Df39nO1Tvy2-JuI9F9X0Vmp5Rw0eIuPl/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1LzaSgX0Xz-wkw6xfc2oO5Wv3vMSMLzJ0",
+          "url": "https://drive.google.com/file/d/1LzaSgX0Xz-wkw6xfc2oO5Wv3vMSMLzJ0/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 7,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-7",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:12.418Z",
+      "httpStatus": 200,
+      "contentHash": "f5bdf98819e42bb3dca621ec26cd3c29444bcfe2fe312ef48371fa15a825dfff",
+      "files": [
+        {
+          "id": "1R4ur6OQPKrJDuqmurlwXQ1OMY5wqLb23",
+          "url": "https://drive.google.com/file/d/1R4ur6OQPKrJDuqmurlwXQ1OMY5wqLb23/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1N0L7JQZKhJNzF0XHKKekK7g5FMFyaJhb",
+          "url": "https://drive.google.com/file/d/1N0L7JQZKhJNzF0XHKKekK7g5FMFyaJhb/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1V2phZIAl03YIreX4shpFeVm5McPP_0wz",
+          "url": "https://drive.google.com/file/d/1V2phZIAl03YIreX4shpFeVm5McPP_0wz/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "10nMHshSkxiIswpvfdyojDIqA-5SfAkQR",
+          "url": "https://drive.google.com/file/d/10nMHshSkxiIswpvfdyojDIqA-5SfAkQR/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1xPo82OY6aLIPvYl5vtB0FyG0EM9OS-0Z",
+          "url": "https://drive.google.com/file/d/1xPo82OY6aLIPvYl5vtB0FyG0EM9OS-0Z/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1qLwxFmvhS64NqgZIZ8-0k24D1tZk-t42",
+          "url": "https://drive.google.com/file/d/1qLwxFmvhS64NqgZIZ8-0k24D1tZk-t42/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "11k-Pm9IhyeMjPDapWwVveCFaKoNqURM-",
+          "url": "https://drive.google.com/file/d/11k-Pm9IhyeMjPDapWwVveCFaKoNqURM-/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 8,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-8",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:12.569Z",
+      "httpStatus": 200,
+      "contentHash": "d91a7b728c6feba8edb15c9f286978af78ae5c3f335737c4afda09dd77c338c6",
+      "files": [
+        {
+          "id": "1QbQV_DgmoJiQ6AvD2gdZjHz0Tk7hur0r",
+          "url": "https://drive.google.com/file/d/1QbQV_DgmoJiQ6AvD2gdZjHz0Tk7hur0r/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1CdKL1LqxStnB82xobvxJbVnQYVvIjKaZ",
+          "url": "https://drive.google.com/file/d/1CdKL1LqxStnB82xobvxJbVnQYVvIjKaZ/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1RFlCPzSdXK8FnF_uqyuzG4DLse0HPlz8",
+          "url": "https://drive.google.com/file/d/1RFlCPzSdXK8FnF_uqyuzG4DLse0HPlz8/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1SU0IGG6gHbAYH0KdnlYnjCXrtmjJfxS5",
+          "url": "https://drive.google.com/file/d/1SU0IGG6gHbAYH0KdnlYnjCXrtmjJfxS5/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1PMED4SPoVJE5fYNPp6BJXLyUVqbtHrHu",
+          "url": "https://drive.google.com/file/d/1PMED4SPoVJE5fYNPp6BJXLyUVqbtHrHu/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Y46GvbxkhoDCILyqDKvVKP9e8KCNzPSZ",
+          "url": "https://drive.google.com/file/d/1Y46GvbxkhoDCILyqDKvVKP9e8KCNzPSZ/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Yml2c-0uPLTNY-ov5VTpzHS12YyNdxmL",
+          "url": "https://drive.google.com/file/d/1Yml2c-0uPLTNY-ov5VTpzHS12YyNdxmL/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 9,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-9",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:12.732Z",
+      "httpStatus": 200,
+      "contentHash": "df9426c2ee49b448b5d745d7a9927079d79de91223d91d948846fb95747c393d",
+      "files": [
+        {
+          "id": "1vrj1lMHJG0yTVKApoVqePfZ0CJ80eGW0",
+          "url": "https://drive.google.com/file/d/1vrj1lMHJG0yTVKApoVqePfZ0CJ80eGW0/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Zq_FNL6KFBUznpYzo3cdn8vlz2afflr2",
+          "url": "https://drive.google.com/file/d/1Zq_FNL6KFBUznpYzo3cdn8vlz2afflr2/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "15HIr4TLB5BBz4XUHp5hsu7_5q0x9Nxpk",
+          "url": "https://drive.google.com/file/d/15HIr4TLB5BBz4XUHp5hsu7_5q0x9Nxpk/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1MDssj4hOXIxeSbEmgNeoMkqjxdIB144O",
+          "url": "https://drive.google.com/file/d/1MDssj4hOXIxeSbEmgNeoMkqjxdIB144O/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1xTHprzxAbWLGzZf0FiCyhCFJxbbyfx0o",
+          "url": "https://drive.google.com/file/d/1xTHprzxAbWLGzZf0FiCyhCFJxbbyfx0o/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1xYZpMyjkjEuhegdDL_7xyzoptwq2NC6B",
+          "url": "https://drive.google.com/file/d/1xYZpMyjkjEuhegdDL_7xyzoptwq2NC6B/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1opfJencvg_RY1rtajY7C3Zq8IcJV2-gm",
+          "url": "https://drive.google.com/file/d/1opfJencvg_RY1rtajY7C3Zq8IcJV2-gm/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1OJPNq3RSWO6BG46Y_35Ek-zygUtgEpZq",
+          "url": "https://drive.google.com/file/d/1OJPNq3RSWO6BG46Y_35Ek-zygUtgEpZq/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1uFs1nPjzHUo2SavXz9DEz5s7lAdDLi6U",
+          "url": "https://drive.google.com/file/d/1uFs1nPjzHUo2SavXz9DEz5s7lAdDLi6U/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1E_QIdp1tisaSULv5efqP2VwMaWNysyPq",
+          "url": "https://drive.google.com/file/d/1E_QIdp1tisaSULv5efqP2VwMaWNysyPq/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1FuOe3cTy7SgiCX80rTL6K6yVOKygpdz9",
+          "url": "https://drive.google.com/file/d/1FuOe3cTy7SgiCX80rTL6K6yVOKygpdz9/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1LOCNyA9HU7-uz-2OJdPhXFde5si_9NKk",
+          "url": "https://drive.google.com/file/d/1LOCNyA9HU7-uz-2OJdPhXFde5si_9NKk/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Nt52PT1JGR7lsYnCvUQWBJf35PgcAdcL",
+          "url": "https://drive.google.com/file/d/1Nt52PT1JGR7lsYnCvUQWBJf35PgcAdcL/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1oohXr7fU1pE7zbn7hUVSWZpSpB71cWNb",
+          "url": "https://drive.google.com/file/d/1oohXr7fU1pE7zbn7hUVSWZpSpB71cWNb/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1XLaW3lA22Lv0tkNzn6fkj3xnQzRtbnMw",
+          "url": "https://drive.google.com/file/d/1XLaW3lA22Lv0tkNzn6fkj3xnQzRtbnMw/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "17cysliyHJd8aGcoQnyBNuwXLkDHUCPlY",
+          "url": "https://drive.google.com/file/d/17cysliyHJd8aGcoQnyBNuwXLkDHUCPlY/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1IREGAH_mGHJaeOCGrFTqg2fmH3cwii95",
+          "url": "https://drive.google.com/file/d/1IREGAH_mGHJaeOCGrFTqg2fmH3cwii95/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1btbi6nI2gjStLIdg7Rk4Ea6WlFqvtPH8",
+          "url": "https://drive.google.com/file/d/1btbi6nI2gjStLIdg7Rk4Ea6WlFqvtPH8/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "19ZLEAqrFHhkbujxlWsXa48CmyEFjCP_a",
+          "url": "https://drive.google.com/file/d/19ZLEAqrFHhkbujxlWsXa48CmyEFjCP_a/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "10yv35MVxVHENLkDjkMKyiy3_SVoOcOuT",
+          "url": "https://drive.google.com/file/d/10yv35MVxVHENLkDjkMKyiy3_SVoOcOuT/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1MPdlxqpM4c2XlfuUZqZv3zkZn56dMN5H",
+          "url": "https://drive.google.com/file/d/1MPdlxqpM4c2XlfuUZqZv3zkZn56dMN5H/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "10ilZVgJo5j_8zudn0mkjpDa4GzhssqHN",
+          "url": "https://drive.google.com/file/d/10ilZVgJo5j_8zudn0mkjpDa4GzhssqHN/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1U_p54kSAbzxSgS8n4D1cXWHcPFinX7u9",
+          "url": "https://drive.google.com/file/d/1U_p54kSAbzxSgS8n4D1cXWHcPFinX7u9/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1iLZzz4GcrYHrIxqrA2bVv152BVMz70xD",
+          "url": "https://drive.google.com/file/d/1iLZzz4GcrYHrIxqrA2bVv152BVMz70xD/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1F1JJc0M-WeuLDDc25QB0_lwEoshmjYU0",
+          "url": "https://drive.google.com/file/d/1F1JJc0M-WeuLDDc25QB0_lwEoshmjYU0/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1jqW22VwihjjfWOycpMw5VizXV0mr2-NT",
+          "url": "https://drive.google.com/file/d/1jqW22VwihjjfWOycpMw5VizXV0mr2-NT/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1DOAT40l90F-DFnp7QNk51ZsTjQWD7B9N",
+          "url": "https://drive.google.com/file/d/1DOAT40l90F-DFnp7QNk51ZsTjQWD7B9N/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 10,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-10",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:12.856Z",
+      "httpStatus": 200,
+      "contentHash": "274b0b1b0c0d3069b1383652bae9c29a26c2c81bb0e3643a04fb9165d8bf2f29",
+      "files": [
+        {
+          "id": "1Cxy818bjtI6ZNLZWQsQEuDJrE5lccBjA",
+          "url": "https://drive.google.com/file/d/1Cxy818bjtI6ZNLZWQsQEuDJrE5lccBjA/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1B7G0uZijKpcfud-ayu-m14mNOBKJgxZR",
+          "url": "https://drive.google.com/file/d/1B7G0uZijKpcfud-ayu-m14mNOBKJgxZR/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Gw_DVqcVh5xGsoLohumBO-CZa2MUwGsn",
+          "url": "https://drive.google.com/file/d/1Gw_DVqcVh5xGsoLohumBO-CZa2MUwGsn/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1cpR-GJ9RhZAuaTq8qUt7DItSOgSPoTRC",
+          "url": "https://drive.google.com/file/d/1cpR-GJ9RhZAuaTq8qUt7DItSOgSPoTRC/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1xTHprzxAbWLGzZf0FiCyhCFJxbbyfx0o",
+          "url": "https://drive.google.com/file/d/1xTHprzxAbWLGzZf0FiCyhCFJxbbyfx0o/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1xYZpMyjkjEuhegdDL_7xyzoptwq2NC6B",
+          "url": "https://drive.google.com/file/d/1xYZpMyjkjEuhegdDL_7xyzoptwq2NC6B/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1opfJencvg_RY1rtajY7C3Zq8IcJV2-gm",
+          "url": "https://drive.google.com/file/d/1opfJencvg_RY1rtajY7C3Zq8IcJV2-gm/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1OJPNq3RSWO6BG46Y_35Ek-zygUtgEpZq",
+          "url": "https://drive.google.com/file/d/1OJPNq3RSWO6BG46Y_35Ek-zygUtgEpZq/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1uFs1nPjzHUo2SavXz9DEz5s7lAdDLi6U",
+          "url": "https://drive.google.com/file/d/1uFs1nPjzHUo2SavXz9DEz5s7lAdDLi6U/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1E_QIdp1tisaSULv5efqP2VwMaWNysyPq",
+          "url": "https://drive.google.com/file/d/1E_QIdp1tisaSULv5efqP2VwMaWNysyPq/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1FuOe3cTy7SgiCX80rTL6K6yVOKygpdz9",
+          "url": "https://drive.google.com/file/d/1FuOe3cTy7SgiCX80rTL6K6yVOKygpdz9/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1LOCNyA9HU7-uz-2OJdPhXFde5si_9NKk",
+          "url": "https://drive.google.com/file/d/1LOCNyA9HU7-uz-2OJdPhXFde5si_9NKk/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1Nt52PT1JGR7lsYnCvUQWBJf35PgcAdcL",
+          "url": "https://drive.google.com/file/d/1Nt52PT1JGR7lsYnCvUQWBJf35PgcAdcL/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1oohXr7fU1pE7zbn7hUVSWZpSpB71cWNb",
+          "url": "https://drive.google.com/file/d/1oohXr7fU1pE7zbn7hUVSWZpSpB71cWNb/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1XLaW3lA22Lv0tkNzn6fkj3xnQzRtbnMw",
+          "url": "https://drive.google.com/file/d/1XLaW3lA22Lv0tkNzn6fkj3xnQzRtbnMw/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "17cysliyHJd8aGcoQnyBNuwXLkDHUCPlY",
+          "url": "https://drive.google.com/file/d/17cysliyHJd8aGcoQnyBNuwXLkDHUCPlY/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1IREGAH_mGHJaeOCGrFTqg2fmH3cwii95",
+          "url": "https://drive.google.com/file/d/1IREGAH_mGHJaeOCGrFTqg2fmH3cwii95/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1btbi6nI2gjStLIdg7Rk4Ea6WlFqvtPH8",
+          "url": "https://drive.google.com/file/d/1btbi6nI2gjStLIdg7Rk4Ea6WlFqvtPH8/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "19ZLEAqrFHhkbujxlWsXa48CmyEFjCP_a",
+          "url": "https://drive.google.com/file/d/19ZLEAqrFHhkbujxlWsXa48CmyEFjCP_a/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "10yv35MVxVHENLkDjkMKyiy3_SVoOcOuT",
+          "url": "https://drive.google.com/file/d/10yv35MVxVHENLkDjkMKyiy3_SVoOcOuT/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1MPdlxqpM4c2XlfuUZqZv3zkZn56dMN5H",
+          "url": "https://drive.google.com/file/d/1MPdlxqpM4c2XlfuUZqZv3zkZn56dMN5H/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "10ilZVgJo5j_8zudn0mkjpDa4GzhssqHN",
+          "url": "https://drive.google.com/file/d/10ilZVgJo5j_8zudn0mkjpDa4GzhssqHN/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1U_p54kSAbzxSgS8n4D1cXWHcPFinX7u9",
+          "url": "https://drive.google.com/file/d/1U_p54kSAbzxSgS8n4D1cXWHcPFinX7u9/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1iLZzz4GcrYHrIxqrA2bVv152BVMz70xD",
+          "url": "https://drive.google.com/file/d/1iLZzz4GcrYHrIxqrA2bVv152BVMz70xD/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1F1JJc0M-WeuLDDc25QB0_lwEoshmjYU0",
+          "url": "https://drive.google.com/file/d/1F1JJc0M-WeuLDDc25QB0_lwEoshmjYU0/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1jqW22VwihjjfWOycpMw5VizXV0mr2-NT",
+          "url": "https://drive.google.com/file/d/1jqW22VwihjjfWOycpMw5VizXV0mr2-NT/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1DOAT40l90F-DFnp7QNk51ZsTjQWD7B9N",
+          "url": "https://drive.google.com/file/d/1DOAT40l90F-DFnp7QNk51ZsTjQWD7B9N/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 11,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-11",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:12.976Z",
+      "httpStatus": 200,
+      "contentHash": "a6216deb732fddd32146ee4622cd2697b2ffdd0ef3add50a5228065fb5292b35",
+      "files": [
+        {
+          "id": "1klmkNxIgWIk6GdZQWRkhG6O7m-9t6oel",
+          "url": "https://drive.google.com/file/d/1klmkNxIgWIk6GdZQWRkhG6O7m-9t6oel/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1XmYOndR5nclaJHbM4D5O1XTrWdFT9O85",
+          "url": "https://drive.google.com/file/d/1XmYOndR5nclaJHbM4D5O1XTrWdFT9O85/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "17yNE4AoXxvAIr-PUnLiPzgtUwvvNh6AO",
+          "url": "https://drive.google.com/file/d/17yNE4AoXxvAIr-PUnLiPzgtUwvvNh6AO/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1qYzEC1hkuMChJC6IcuwJMLcxM-aVUDdC",
+          "url": "https://drive.google.com/file/d/1qYzEC1hkuMChJC6IcuwJMLcxM-aVUDdC/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1aIO0y7B9vjuDG81WOC7D3y8QrCdowwOk",
+          "url": "https://drive.google.com/file/d/1aIO0y7B9vjuDG81WOC7D3y8QrCdowwOk/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1eTDrONZZWP4VNr39IwN_s8VR7N7-T3En",
+          "url": "https://drive.google.com/file/d/1eTDrONZZWP4VNr39IwN_s8VR7N7-T3En/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "10NY7am3x1lq9UtZM4PUXH2-PelCJxvL-",
+          "url": "https://drive.google.com/file/d/10NY7am3x1lq9UtZM4PUXH2-PelCJxvL-/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1ad3r5lDeywFdA1GzdjujA8tXcEXXwbeP",
+          "url": "https://drive.google.com/file/d/1ad3r5lDeywFdA1GzdjujA8tXcEXXwbeP/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1ZBQgqHwo9jDWTlobWVM4oy41NeJUuJXU",
+          "url": "https://drive.google.com/file/d/1ZBQgqHwo9jDWTlobWVM4oy41NeJUuJXU/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1c8Tf-MP4rbBPu4bRwwriZ0fEFzwZk_FX",
+          "url": "https://drive.google.com/file/d/1c8Tf-MP4rbBPu4bRwwriZ0fEFzwZk_FX/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1QPZ7v4Y4_q-3gsBPHTDBv0uVQgjoFdpJ",
+          "url": "https://drive.google.com/file/d/1QPZ7v4Y4_q-3gsBPHTDBv0uVQgjoFdpJ/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1NA6zEDkhZ2ytu7U0L8ZHvHN8ajS_NBb7",
+          "url": "https://drive.google.com/file/d/1NA6zEDkhZ2ytu7U0L8ZHvHN8ajS_NBb7/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    },
+    {
+      "grade": 12,
+      "url": "https://sites.google.com/deped.gov.ph/lsguide/budgets-of-work/grade-12",
+      "status": "linked-only",
+      "retrievedAt": "2026-10-07T22:22:13.113Z",
+      "httpStatus": 200,
+      "contentHash": "74fc3f6067b215f327a596c5b057b925cf9b5666ac673cab2e581a1707fa3f3d",
+      "files": [
+        {
+          "id": "1PYeJENprvq6hNXksak86kEdRckRk82Uq",
+          "url": "https://drive.google.com/file/d/1PYeJENprvq6hNXksak86kEdRckRk82Uq/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1xzuiqKDSmfcvZjhugbiLKsrEn_9Rhnkf",
+          "url": "https://drive.google.com/file/d/1xzuiqKDSmfcvZjhugbiLKsrEn_9Rhnkf/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1BE8ba7GwiPCGHJkUt_DMP9BTbk16JsC_",
+          "url": "https://drive.google.com/file/d/1BE8ba7GwiPCGHJkUt_DMP9BTbk16JsC_/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "12h1HSxBBJR234Rz89EWEfjDZ9QGth2Jp",
+          "url": "https://drive.google.com/file/d/12h1HSxBBJR234Rz89EWEfjDZ9QGth2Jp/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1RH0tM9KgI08Nm4g_FHWRnG0vcZIDTLG-",
+          "url": "https://drive.google.com/file/d/1RH0tM9KgI08Nm4g_FHWRnG0vcZIDTLG-/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1y9_Q34YaLRB-HyrJcjB2PjbHYWGUYenz",
+          "url": "https://drive.google.com/file/d/1y9_Q34YaLRB-HyrJcjB2PjbHYWGUYenz/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "19oSt7GANo121z3-WLOleM1wQDOSz0k7M",
+          "url": "https://drive.google.com/file/d/19oSt7GANo121z3-WLOleM1wQDOSz0k7M/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1p_VmiZoL8XcURp_Y_cbxO8EQ7nvRGVSc",
+          "url": "https://drive.google.com/file/d/1p_VmiZoL8XcURp_Y_cbxO8EQ7nvRGVSc/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1xFYfmvxw_lE2vKDv3yi11Wf-_3V2vlB8",
+          "url": "https://drive.google.com/file/d/1xFYfmvxw_lE2vKDv3yi11Wf-_3V2vlB8/view",
+          "status": "linked-only"
+        },
+        {
+          "id": "1dX5oKC_lQdMtNqWiMivBJo8an9HpRlQW",
+          "url": "https://drive.google.com/file/d/1dX5oKC_lQdMtNqWiMivBJo8an9HpRlQW/view",
+          "status": "linked-only"
+        }
+      ],
+      "notice": "A directory link is not a reviewed competency or verified school-year applicability."
+    }
+  ]
+}

@@ -54,7 +54,7 @@ Context7 output is supplemental technical evidence only. It cannot establish cur
 
 ## Curriculum, BOW and policy
 
-The central BOW directory covers Kindergarten–Grade 12; its links are not populated competency data. Full embedded BOW retrieval remains incomplete. Grade 11/12 academic/TechPro resources have differing coverage. No all-grade completion claim is made.
+The central BOW directory covers Kindergarten–Grade 12. On 8 October 2026, readable text was retrieved for all 99 unique PDFs linked from its 13 grade directories. Sources & policy → Review BOW source files shows the extracted documents, original links and an exact-excerpt import queue. Extraction remains pending review; table mapping, curriculum version, school-year and week applicability are not inferred. Grade 11/12 academic/TechPro resources have differing coverage. No all-grade completion claim is made.
 
 Teachers can add one sourced competency or import 1–100 JSON rows at a time through Sources & policy / curriculum selection. All account imports remain **teacher-confirmed**, even if an uploaded row claims verification. Exact competencies, codes and supplied standards must occur in the excerpt. BOW rows additionally require exact curriculum version, school year, term and source week (or null). Batch imports are transactional. See [BOW import](docs/deped/bow-import.md).
 
@@ -109,8 +109,22 @@ Runtime proposals in that analysis are not implementation claims.
 
 ## Mathematical notation and classroom slides
 
-Use explicit `\( ... \)`, `\[ ... \]` or `$$ ... $$` delimiters for supported fractions, roots, scripts and common symbols. The editor and print preview use MathML; DOCX uses editable Office equations. PDF and PowerPoint use readable linear notation. Unsupported notation keeps its original source. This bounded renderer does not evaluate mathematical answers.
+Use explicit `\( ... \)`, `\[ ... \]` or `$$ ... $$` delimiters for supported fractions, roots, scripts and common symbols. The editor and print preview use MathML; DOCX uses editable Office equations. PDF and PowerPoint use readable linear notation. Unsupported notation keeps its original source. Check arithmetic provides exact bounded rational checks for one supported equality/inequality, optionally with explicit numeric substitutions through the checker API. Unsupported symbols, units, domains and proofs require teacher review. It does not certify a complete answer key.
 
 PowerPoint uses the latest saved teacher-reviewed revision. Storyboard roles come from intentions, learner activities, assessment and reflection; teacher instructions, supports and keys are in speaker notes. Slides contain editable text, not screenshots. Review mathematical notation and classroom pacing before use. See [dependency decision](docs/architecture/classroom-export-adr.md).
 
 Context7 technical snapshots (including empty results) are retained with validated generation stages, so resumed stages use the same supplemental evidence. Cancellation aborts a pending lookup before model calls. No live Context7 account call was made during synthetic tests.
+
+## Continued teacher workflows
+
+**Images** stores bounded canonical PNGs (JPEG converts in the picker), with alt text, descriptions, attribution and rights. Owned images survive retained revisions and DOCX/PDF/PPTX exports. Teacher-only images are excluded from learner packets and slides. Coordinate diagrams use explicit points, equal x/y scale and editable source; editing creates a new asset so previous revisions keep their image. Raster images remain raster in exported files.
+
+**Edit slides** saves editable learner text and private notes against the teacher-reviewed lesson revision, with version conflicts and a classroom preview. Lesson changes preserve edits but block stale PowerPoint downloads until deliberate rebuilding. **Export → Companion audience** separates learner tasks and teacher keys.
+
+**Adapt class** creates a new draft with parent ancestry, chosen class context and optional minute reallocation. Actual evidence/reflection is cleared. It preserves original content for teacher adaptation. **Draft backup** downloads lesson JSON; IndexedDB device recovery has a localStorage fallback. Neither replaces the installation backup in [backup/restore](docs/operations-backup.md).
+
+Preparation mappings are available in observation records through an [operator-reviewed tool registry](docs/deped/observation-tool-registry.md). No official tool is activated by default, and no rating is calculated.
+
+`npm run benchmark` runs 30 Math/TLE practice briefs offline, preserving structural metrics and exports. It leaves all teacher quality scores blank. `npm run benchmark -- --live --limit=1` requires configured credentials and caps the entire run at 27 provider requests. It consumes provider quota; the default offline run makes no provider calls. This measures generation/assembly, not teacher preparation time or classroom outcomes.
+
+The [free-cloud save spike](docs/architecture/free-cloud-spike.md) tests owner RLS, revision history and atomic saves on local PostgreSQL WASM. Production remains Node/SQLite. Hosted authentication, deployment and teacher-scored pilots require actual project configuration and review.
