@@ -58,7 +58,7 @@ async function technicalReferenceFor(input,source,technicalDocsProvider,onStage=
  return technicalDocsProvider.lookup({subject:input.subject,competency:source.competency||input.competency,libraries:input.technicalLibraries});
 }
 function recordTechnicalReference(plan,input,technicalReference){
- if(input.technicalReference)plan.metadata.technicalReference={requested:true,used:Boolean(technicalReference),provider:technicalReference?.provider||'Context7',classification:'supplemental technical documentation',libraries:technicalReference?.libraries||[]};
+ if(input.technicalReference){plan.metadata.technicalReference={requested:true,used:Boolean(technicalReference),provider:technicalReference?.provider||'Context7',classification:'supplemental technical documentation',libraries:technicalReference?.libraries||[]};if(technicalReference)plan.metadata.aiDeclaration+=' Supplemental current software-library documentation retrieved through Context7 informed technical examples only; it did not establish curriculum or policy authority.';}
  return plan;
 }
 export async function generateAI(raw,{records,provider=new AIProvider(),technicalDocsProvider=new Context7TechnicalProvider(),onStage=async()=>{}}={}){
