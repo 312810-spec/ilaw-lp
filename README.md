@@ -30,7 +30,7 @@ This user-requested AI drafting workflow **does not establish compliance** with 
 
 Signed-in teachers open **AI settings** to save a masked Gemini or Groq key. Credentials are encrypted with AES-256-GCM, scoped to the account, used only on the server, and excluded from exports/device recovery. Saving is not a connection test; the separate Test connection action makes a small provider call and consumes provider quota. Free quotas and terms are provider-controlled; paid-account keys can incur charges. Gemini free-tier content may be used to improve Google products. Never send identifiable/sensitive learner information.
 
-For administrator configuration, use `AI_API_KEY`, `AI_BASE_URL`, `AI_DESIGN_MODEL`, `AI_FAST_MODEL`. APIs must support the supplied JSON schema; provider-facing compatibility and lesson quality need live validation. No fake response or silent fallback is used. Account credentials override the administrator provider. Missing/refused/invalid/rate-limited output fails clearly while preserving input.
+For administrator configuration, use `AI_API_KEY`, `AI_BASE_URL`, `AI_DESIGN_MODEL`, `AI_FAST_MODEL`. Account credentials override the administrator provider. AI calls make at most three attempts per stage: transient network/server/rate-limit failures retry with bounded backoff and Retry-After (up to 30 seconds); malformed JSON, timing and alignment failures request a corrected AI response. Provider schema/parameter incompatibility can use JSON-object mode with the original schema still enforced locally. A truncated or persistently invalid complete-plan response automatically continues through smaller AI stages, retaining completed stages during request retries. Recovery and provider calls are disclosed in progress/metadata. Missing/rejected keys, exhausted quotas and refusals stop with specific setup/retry options. Inputs remain stored; a separate teacher-selected guided draft is available. Validated stages persist in SQLite across failure and server restart. Resume generation revalidates and reuses eligible stages with matching input, source, models and contract within seven days of checkpoint activity. Final plan save and job completion are transactional. One server process per database is required; cross-process worker leases remain pending. No fake AI output or automatic guided substitute is used. Live provider validation still requires a working key; repeated calls can consume quota or incur charges.
 
 Selected wording/translation assistance displays original and proposed text for acceptance; protected numbers and mathematical symbols are checked. Meaning and subject correctness require teacher review. Accepted wording assistance is disclosed and saved in revision history. Initial model IDs, workflow, prompt version and usage are recorded when available.
 
@@ -71,7 +71,7 @@ npm run setup:browser
 npm run test:e2e
 ```
 
-Browser setup resolves the installed Playwright CLI, including runtime-provided installations. Set `BROWSER_PATH` for an existing compatible Chromium, or `ILAW_SKIP_BROWSER_OS_DEPS=true` to skip OS dependency installation when they already exist. Browser checks use actual handlers, desktop/mobile screenshots and DOCX/PDF downloads. Current Chromium download attempts failed; a native pass is not claimed. GitHub Actions installs the browser and runs the checks.
+Browser setup resolves the installed Playwright CLI, including runtime-provided installations. Set `BROWSER_PATH` for an existing compatible Chromium, or `ILAW_SKIP_BROWSER_OS_DEPS=true` to skip OS dependency installation when they already exist. Browser checks use actual handlers, desktop/mobile screenshots and DOCX/PDF downloads. GitHub CI passed the native teacher journey, desktop/mobile checks and DOCX/PDF downloads on the merged baseline. GitHub Actions installs the browser and runs the checks.
 
 `npm run check:ai` is an opt-in eight-call live diagnostic requiring administrator credentials; it can consume quota/incur charges. No live provider comparison or teacher-scored benchmark has been completed.
 
@@ -80,3 +80,11 @@ Browser setup resolves the installed Playwright CLI, including runtime-provided 
 Password hashing, HttpOnly/SameSite sessions, CSRF/origin checks, ownership/assignment authorization, bounded requests, prepared queries and transactional revisions are retained. Initial keys use owner-only permissions in `<database>.keys`; protect and back up this encryption file with SQLite. Losing it makes account keys unreadable. Secrets and prompt contents are not logged.
 
 For external serving, provision an HTTPS reverse proxy and exact `ILAW_PUBLIC_ORIGIN`; configure `HOST` appropriately. No deployment is created by these changes. Password-reset service, school multi-tenancy, production monitoring and formal appraisal authority are outside the current release. Review these needs before broad deployment.
+
+## Project workflow and next enhancements
+
+[FORGE v2](docs/workflow/FORGE.md) adapts the user's LIKHA-SIS workflow to this
+project. The [AI enhancement analysis](docs/product/forge-ai-enhancement-analysis.md)
+compares three approaches and prioritizes reliable complete AI drafting,
+resumable recovery, teacher-friendly setup and content-quality validation.
+Runtime proposals in that analysis are not implementation claims.

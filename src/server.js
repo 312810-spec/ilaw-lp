@@ -40,7 +40,13 @@ export async function createApp({database,provider=new AIProvider(),host=process
  const makeJob=async(job,input,user)=>{
   activeJobs.add(job);
   const stage=async name=>{db.prepare("UPDATE jobs SET status='running',stage=?,updated_at=? WHERE id=?").run(name,now(),job);await new Promise(resolve=>setImmediate(resolve));};
-  try{const options={records:curriculumFor(user),provider:providerFor(user),onStage:stage};const plan=input.mode==='ai'?await generateAI(input,options):await generateGuided(input,options);await stage('save');const saved=savePlan(plan,user,{isNew:true,label:plan.metadata.origin});db.prepare("UPDATE jobs SET status='completed',stage='save',plan_id=?,updated_at=? WHERE id=?").run(saved.id,now(),job);}
+  try{const jobRecords=curriculumFor(user),jobProvider=providerFor(user);
+   const fingerprint=hash(JSON.stringify({contract:'staged-retention-v1',input,source:resolveCompetency(input,jobRecords),models:[jobProvider.base,jobProvider.designModel,jobProvider.fastModel]}));
+   const row=db.prepare('SELECT * FROM job_checkpoints WHERE job_id=?').get(job);
+   if(row&&(row.fingerprint!==fingerprint||Date.now()-Date.parse(row.updated_at)>7*24*3600000))throw statusError(409,'Retained stages expired or their source/model changed. Review input and start a new generation.');
+   const parts=row?JSON.parse(row.payload):{};
+   const checkpoint={...(row?{parts}:{}),save:async(name,result)=>{parts[name]=result;db.prepare('INSERT INTO job_checkpoints VALUES (?,?,?,?) ON CONFLICT(job_id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').run(job,fingerprint,JSON.stringify(parts),now());}};
+   const options={records:jobRecords,provider:jobProvider,onStage:stage,checkpoint};const plan=input.mode==='ai'?await generateAI(input,options):await generateGuided(input,options);await stage('save');savePlan(plan,user,{isNew:true,label:plan.metadata.origin,onSaved:saved=>{db.prepare("UPDATE jobs SET status='completed',stage='save',plan_id=?,error=NULL,updated_at=? WHERE id=?").run(saved.id,now(),job);db.prepare('DELETE FROM job_checkpoints WHERE job_id=?').run(job);}});}
   catch(e){db.prepare("UPDATE jobs SET status='failed',error=?,updated_at=? WHERE id=?").run(e.status?e.message:'Generation failed safely. Your input is preserved; retry.',now(),job);console.error(`generation_failed: ${e.name}`);}
   finally{activeJobs.delete(job);}
  };
@@ -115,6 +121,15 @@ export async function createApp({database,provider=new AIProvider(),host=process
      if(activeJobs.size>=3)throw statusError(429,'The generation queue is busy. Try again shortly.');limit(`generation:${user}`,8,3600000);
      const id=crypto.randomUUID();db.prepare('INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?,?)').run(id,user,'queued','resolve',JSON.stringify(input),null,null,now(),now());
      send(res,202,{jobId:id});setImmediate(()=>makeJob(id,input,user));return;
+    }
+    const resumeMatch=route.match(/^\/api\/jobs\/([a-f0-9-]{36})\/resume$/);
+    if(resumeMatch&&method==='POST'){
+     const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(resumeMatch[1],user);if(!job)throw statusError(404,'Generation not found');
+     if(job.status==='completed'){send(res,200,{jobId:job.id});return;}
+     if(job.status!=='failed'||activeJobs.has(job.id)||db.prepare("SELECT count(*) n FROM jobs WHERE user_id=? AND status IN ('queued','running')").get(user).n)throw statusError(409,'Generation is already active.');
+     if(activeJobs.size>=3)throw statusError(429,'The generation queue is busy.');limit(`generation:${user}`,8,3600000);
+     db.prepare("UPDATE jobs SET status='queued',error=NULL,updated_at=? WHERE id=? AND status='failed'").run(now(),job.id);
+     send(res,202,{jobId:job.id});setImmediate(()=>makeJob(job.id,JSON.parse(job.input),user));return;
     }
     const jobMatch=route.match(/^\/api\/jobs\/([a-f0-9-]{36})$/);
     if(jobMatch&&method==='GET'){const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(jobMatch[1],user);if(!job)throw statusError(404,'Generation not found');send(res,200,{id:job.id,status:job.status,stage:job.stage,label:stageLabels[job.stage]||job.stage,planId:job.plan_id,error:job.error,input:job.status==='failed'?JSON.parse(job.input):undefined});return;}
