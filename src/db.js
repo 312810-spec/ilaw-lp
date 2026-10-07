@@ -22,6 +22,7 @@ export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sql
  const secretPath=filename+'.keys';let credentialKey;
  if(filename===':memory:')credentialKey=randomBytes(32);else{try{fs.writeFileSync(secretPath,randomBytes(32),{flag:'wx',mode:0o600});}catch(e){if(e.code!=='EEXIST')throw e;}fs.chmodSync(secretPath,0o600);credentialKey=fs.readFileSync(secretPath);if(credentialKey.length!==32)throw Error('Invalid credential encryption key');}
  db.exec('CREATE TABLE IF NOT EXISTS ai_credentials (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, provider TEXT NOT NULL, secret TEXT NOT NULL)');
+ db.exec('CREATE TABLE IF NOT EXISTS plan_proposals (id TEXT PRIMARY KEY, plan_id TEXT NOT NULL UNIQUE REFERENCES plans(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,base_revision INTEGER NOT NULL,payload TEXT NOT NULL,label TEXT NOT NULL,created_at TEXT NOT NULL)');
  db.exec('CREATE TABLE IF NOT EXISTS ai_probes (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, fingerprint TEXT NOT NULL, model TEXT NOT NULL, tested_at TEXT NOT NULL, success INTEGER NOT NULL)');
  db.exec('CREATE TABLE IF NOT EXISTS job_checkpoints (job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
  const transaction=fn=>{db.exec('BEGIN IMMEDIATE');try{const v=fn();db.exec('COMMIT');return v;}catch(e){db.exec('ROLLBACK');throw e;}};

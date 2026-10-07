@@ -16,7 +16,7 @@ Open `http://127.0.0.1:3000` and create the first teacher account. Node 24+ is r
 2. Select an applicable imported competency or enter an exact source excerpt. Practice examples remain clearly labeled.
 3. Describe anonymous learner context and actual resources. Optionally record a minimum teaching route and a home/continuity alternative.
 4. Choose guided design or live AI, concise/detailed output and focused/KSA objectives. These are app preferences, not universal DepEd requirements.
-5. Edit ILAW sections; autosave, local recovery, optimistic revisions, history and targeted regeneration preserve teacher work.
+5. Edit ILAW sections; autosave, local recovery, optimistic revisions and history preserve teacher work. Targeted regeneration prepares a durable proposal: inspect Current / Proposed content, then accept or keep the current lesson. Proposals expire after 24 hours and cannot replace a newer saved revision.
 6. Use Classroom view while teaching. Enter actual aggregate evidence and post-lesson reflection separately from anticipated Ways Forward.
 7. Export the latest saved plan in concise/expanded DOCX or PDF. Companion tasks and answer keys come from the same accepted plan data. Separate teacher keys before distributing tasks.
 
