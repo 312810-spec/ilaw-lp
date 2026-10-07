@@ -20,7 +20,7 @@ const width=code=>font.readUInt16BE(tables.hmtx+4*Math.min(glyph(code),metrics-1
 const hex=n=>n.toString(16).padStart(4,'0');
 export function exportPDF(plan,options={}){
  const images=exportImages(plan,options).map(a=>({...a,...normalizePNG(a.data)}));
- const blocks=[...documentBlocks(plan,options),...images.map(a=>({style:'Normal',text:imageCaption(a)}))].map(block=>({...block,text:plainMath(block.text)}));const characters=new Set('0123456789Page / ');
+ const blocks=[...documentBlocks(plan,options),...images.map(a=>({style:'Normal',text:imageCaption(a)+'\nAlternative text: '+a.alt}))].map(block=>({...block,text:plainMath(block.text)}));const characters=new Set('0123456789Page / ');
  for(const b of blocks)for(const c of b.text.replace(/[\r\n\t]/g,' ')){if(!glyph(c.codePointAt(0)))throw new ValidationError(`PDF font does not support character U+${c.codePointAt(0).toString(16).toUpperCase()}. Use DOCX or browser print for this content.`);characters.add(c);}
  const chars=[...characters],cid=new Map(chars.map((c,i)=>[c,i+1]));const encode=s=>[...s].map(c=>hex(cid.get(c))).join('');
  const measure=(s,size)=>[...s].reduce((sum,c)=>sum+width(c.codePointAt(0))*size/1000,0);
@@ -29,7 +29,7 @@ export function exportPDF(plan,options={}){
  for(const b of blocks){const size=({Title:20,Heading1:16,Heading2:13,Heading3:11.5})[b.style]||10.5,leading=size*1.45;const lines=wrap(b.text,size);if(b.style!=='Normal'){if(y<46+leading*3)flush();y-=8;}
   for(const line of lines){if(y<55+leading)flush();commands.push(`BT /F1 ${size} Tf 1 0 0 1 46 ${y.toFixed(2)} Tm <${encode(line)}> Tj ET`);y-=leading;}y-=5;
  }if(commands.length)flush();
- for(const [i,image] of images.entries()){const scale=Math.min(503/image.width,680/image.height);const w=image.width*scale,h=image.height*scale;pages.push(`q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} 46 ${(796-h).toFixed(2)} cm /Im${i} Do Q`);}
+ for(const [i,image] of images.entries()){const caption=wrap(plainMath(image.caption||image.alt),11);const scale=Math.min(503/image.width,(710-caption.length*16-15)/image.height);const w=image.width*scale,h=image.height*scale;pages.push(`q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} 46 ${(796-h).toFixed(2)} cm /Im${i} Do Q\n`+caption.map((line,n)=>`BT /F1 11 Tf 1 0 0 1 46 ${(796-h-20-n*16).toFixed(2)} Tm <${encode(line)}> Tj ET`).join('\n'));}
  const objects=[];const reserve=()=>{objects.push(null);return objects.length;};const set=(id,bytes)=>objects[id-1]=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes);const add=bytes=>{const id=reserve();set(id,bytes);return id;};
  const stream=(bytes,extra='')=>{const compressed=deflateSync(bytes);return Buffer.concat([Buffer.from(`<< /Length ${compressed.length} /Filter /FlateDecode ${extra} >>\nstream\n`),compressed,Buffer.from('\nendstream')]);};
  const catalog=reserve(),pageTree=reserve();const fontFile=add(stream(font,`/Length1 ${font.length}`));
