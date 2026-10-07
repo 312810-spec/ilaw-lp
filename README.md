@@ -34,6 +34,23 @@ For administrator configuration, use `AI_API_KEY`, `AI_BASE_URL`, `AI_DESIGN_MOD
 
 Selected wording/translation assistance displays original and proposed text for acceptance; protected numbers and mathematical symbols are checked. Meaning and subject correctness require teacher review. Accepted wording assistance is disclosed and saved in revision history. Initial model IDs, workflow, prompt version and usage are recorded when available.
 
+## Optional current technical grounding
+
+For ICT/programming lessons, an operator can optionally enable **supplemental current software-library documentation** through Context7. This is disabled by default and does not add a production package.
+
+Configure both:
+
+```sh
+ILAW_CONTEXT7_TECHNICAL_REFERENCES=true
+CONTEXT7_API_KEY=...
+```
+
+The runtime integration uses Context7's Search Documentation API. The endpoint and behavior were re-checked against Context7's official documentation on **2026-10-07**; future development must re-check upstream rather than treating that checkpoint as permanent.
+
+A teacher must still opt in for each lesson. The lookup sends only the subject, exact competency/topic and up to four public software-library hints. It deliberately does **not** send learner/class context, teacher identity, lesson references, reflections, evidence, credentials, or private source code. Returned documentation is capped before it enters the model context.
+
+Context7 output is supplemental technical evidence only. It cannot establish curriculum applicability, DepEd policy, competency provenance or lesson correctness, and it never overrides the preserved curriculum source. If Context7 is unavailable, rate-limited or returns no documentation, generation continues without it and the saved plan records that the requested technical grounding was not used.
+
 ## Curriculum, BOW and policy
 
 The central BOW directory covers Kindergarten–Grade 12; its links are not populated competency data. Full embedded BOW retrieval remains incomplete. Grade 11/12 academic/TechPro resources have differing coverage. No all-grade completion claim is made.
