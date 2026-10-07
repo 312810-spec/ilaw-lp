@@ -8,7 +8,7 @@ export function parseTechnicalLibraries(value=''){
 export function buildTechnicalQuery({subject,competency}={}){
  const safeSubject=compact(subject,100),safeCompetency=compact(competency,1200);
  if(!safeSubject||!safeCompetency)return '';
- return `Current official software-library documentation relevant to a teacher lesson in ${safeSubject} about this public technical topic/competency: ${safeCompetency}. Return only current API, syntax, configuration, and code-example evidence. Do not infer curriculum, DepEd policy, learner characteristics, or lesson requirements.`;
+ return `Current official software-library documentation relevant to a teacher lesson in ${safeSubject} about this public technical topic/competency: ${safeCompetency}. Return only current API, syntax, configuration, and code-example evidence. Do not infer curriculum or DepEd policy.`;
 }
 export class Context7TechnicalProvider{
  constructor({key=process.env.CONTEXT7_API_KEY,enabled=process.env.ILAW_CONTEXT7_TECHNICAL_REFERENCES==='true',fetchImpl=fetch,base=process.env.CONTEXT7_SEARCH_URL||defaultBase}={}){
