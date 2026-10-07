@@ -25,7 +25,9 @@ export function presentationStoryboard(plan){
 }
 export async function exportPPTX(plan,{storyboard:preset}={}){
  const storyboard=preset?validateStoryboard(preset,plan):presentationStoryboard(plan);const pptx=new PptxGenJS();pptx.layout='LAYOUT_WIDE';pptx.author=plan.input.teacherName||'ILAW teacher';pptx.subject=`${plan.input.subject}, accepted lesson revision ${plan.revision}`;pptx.title=plan.title;pptx.company=plan.input.schoolName||'ILAW';pptx.lang='en-PH';pptx.theme={headFontFace:'Aptos',bodyFontFace:'Aptos',lang:'en-PH'};
- for(const [index,item] of storyboard.slides.entries()){
+ const displaySlides=storyboard.slides.flatMap(item=>{if(!item.revealAnswer)return [item];const task=plan.sessions.flatMap(s=>s.assessment).find(a=>item.sourceBlockIds.includes(`${a.id}:prompt`));if(!task)throw error('Answer reveal has no accepted assessment source');return [item,...chunks(task.answerKey).map((body,i)=>({...item,id:`${item.id}:answer:${i}`,role:'answer-reveal',title:'Worked answer',body,minutes:null,notes:`Teacher explicitly enabled a visible answer. This deck contains keys; distribute the question-only version when needed.\n${task.rubric}\n${task.misconception}`}))];});
+ if(displaySlides.length>120)throw error('Answer reveals would exceed 120 slides. Reduce enabled reveals before exporting.');
+ for(const [index,item] of displaySlides.entries()){
   const slide=pptx.addSlide();const titleSlide=item.role==='title';slide.background={color:titleSlide?'162D46':'FFFFFF'};const ink=titleSlide?'FFFFFF':'183148';
   const titlePages=chunks(item.title,55);if(titlePages.length>2||item.title.length>110)throw error('A slide title is too long. Shorten the lesson or activity title before exporting.');
   slide.addText(item.title,{x:.75,y:.7,w:11.8,h:1.25,fontFace:'Aptos',fontSize:32,bold:true,color:ink,margin:0,breakLine:false,vertAnchor:'mid'});
@@ -44,6 +46,6 @@ export function validateStoryboard(story,plan){
  if(plan.metadata.status!=='reviewed')throw error('Review the saved lesson before exporting slides.');
  const original=presentationStoryboard(plan);const ids=new Set(original.slides.map(s=>s.id));
  if(!Array.isArray(story.slides)||story.slides.length!==original.slides.length)throw error('Preserve the storyboard slide structure.');
- const seen=new Set();for(const slide of story.slides){if(!ids.has(slide.id)||seen.has(slide.id))throw error('Invalid or duplicate slide identity');seen.add(slide.id);const originalSlide=original.slides.find(s=>s.id===slide.id);for(const [key,max]of [['title',110],['body',420],['notes',8000]])if(typeof slide[key]!=='string'||slide[key].length>(key==='body'&&originalSlide.role==='image'?140:max))throw error(`Slide ${key} exceeds its display limit`);chunks(slide.title,55);chunks(slide.body);}
- return {...original,slides:story.slides.map(s=>({...original.slides.find(o=>o.id===s.id),title:s.title,body:s.body,notes:s.notes}))};
+ const seen=new Set();for(const slide of story.slides){if(!ids.has(slide.id)||seen.has(slide.id))throw error('Invalid or duplicate slide identity');seen.add(slide.id);const originalSlide=original.slides.find(s=>s.id===slide.id);if(slide.revealAnswer!=null&&(typeof slide.revealAnswer!=='boolean'||slide.revealAnswer&&originalSlide.role!=='assessment'))throw error('Only an assessment can have a teacher-enabled answer reveal');for(const [key,max]of [['title',110],['body',420],['notes',8000]])if(typeof slide[key]!=='string'||slide[key].length>(key==='body'&&originalSlide.role==='image'?140:max))throw error(`Slide ${key} exceeds its display limit`);chunks(slide.title,55);chunks(slide.body);}
+ return {...original,slides:story.slides.map(s=>({...original.slides.find(o=>o.id===s.id),title:s.title,body:s.body,notes:s.notes,revealAnswer:s.revealAnswer===true}))};
 }

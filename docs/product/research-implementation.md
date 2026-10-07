@@ -1,3 +1,7 @@
+# Current continuation — 8 October 2026
+
+The 2 October record below is historical. The [completion record](completion-2026-10-08.md) supersedes its export, source retrieval and browser-blocker statements. Teacher workflows are merged as 4267644 with a passing native browser journey. The published DO 016 copy has now been retrieved and its core AI restrictions visually confirmed; source applicability remains separate.
+
 # Research implementation — 2 October 2026
 
 User direction: implement the research recommendations while keeping AI generation similar to IlawCraft (`alotski15-png/ilaw-app-2`). This change adapts its ideas to the existing Node/SQLite app; it does not copy its unsupported national-template assertions, mandatory KSA/HOTS/percentages, generated reflection, fixed COT targets, client credentials or account-recovery logic.

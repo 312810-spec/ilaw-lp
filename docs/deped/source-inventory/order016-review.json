@@ -1,0 +1,20 @@
+{
+ "issuance": "DO 016, s. 2026",
+ "title": "Guidelines on Lesson Planning and Learning Design",
+ "issuanceDate": "2026-06-04",
+ "retrievedAt": "2026-10-08",
+ "officialDirectoryURL": "https://sites.google.com/deped.gov.ph/lsguide/orientation-package",
+ "fileURL": "https://drive.google.com/file/d/1qmUb0IZdPaYHHKRyyyVtuR6d7iJmxxCq/view",
+ "filename": "DO_s2026_016r.pdf",
+ "bytes": 10236957,
+ "pages": 22,
+ "sha256": "8dd277c450f65bf7fb9f0c67d12d2e09eb4d84f9502cf1fdb254628aafd3b597",
+ "status": "source-content-reviewed-applicability-pending",
+ "method": "Official-directory linkage, raw PDF retrieval, 22-page OCR for navigation and visual comparison of cover, issuer page, AI clauses and transition/effectivity page. OCR is not an authoritative transcription. Signature image is obscured in the published copy; no cryptographic signature verification claimed.",
+ "reviewedSections": [
+  {"section": "Enclosure V(C), paragraphs 23–25", "pdfPages": [10,11], "finding": "Fully AI-generated lesson plans and AI core instructional decision-making are prohibited. Limited wording support follows teacher decisions/consultation; technical support is reviewed before integration."},
+  {"section": "Paragraphs 43–44", "pdfPages": [16], "finding": "Transition from former DLL/DLP formats is through Term 1 SY 2026–2027. Effectivity includes publication and filing conditions; their completion date was not established here."}
+ ],
+ "runtimeEffect": "Update source reference and drafting notice. Do not automatically activate a policy registry or certify lesson compliance.",
+ "remaining": ["Publication/ONAR filing evidence and effectivity date", "Applicable current division/school instructions", "Other complete signed orders/tool annexes"]
+}
