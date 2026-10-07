@@ -10,6 +10,7 @@ import {normalizeInput,validateSessions,ValidationError,validate} from './schema
 import {loadCurriculum,policySources,validateRecord,resolveCompetency} from './curriculum.js';
 import {generateGuided,regenerateGuided,retimePlan,stageLabels} from './engine.js';
 import {AIProvider,generateAI,regenerateAI,rejectUnsupportedClaims} from './ai.js';
+import {Context7TechnicalProvider} from './context7.js';
 import {qualityCheck} from './quality.js';
 import {policySnapshot} from './policy.js';
 import {exportDOCX,exportHTML} from './exports.js';
@@ -22,7 +23,7 @@ const exportName=plan=>`ILAW-Grade-${plan.input.grade}-${(plan.input.subject+'-'
 const now=()=>new Date().toISOString();
 const statusError=(status,message)=>Object.assign(Error(message),{status});
 const publicFiles=new Set(['index.html','app.js','styles.css','favicon.svg','print.css','print.js','manifest.webmanifest']);
-export async function createApp({database,provider=new AIProvider(),host=process.env.HOST||'127.0.0.1',port=Number(process.env.PORT||3000),socketPath=process.env.ILAW_SOCKET}={}){
+export async function createApp({database,provider=new AIProvider(),technicalDocsProvider=new Context7TechnicalProvider(),host=process.env.HOST||'127.0.0.1',port=Number(process.env.PORT||3000),socketPath=process.env.ILAW_SOCKET}={}){
  const storage=database||openDatabase();const {db,getPlan,savePlan}=storage;const observations=observationStore(db);const records=loadCurriculum();const rates=new Map();const activeJobs=new Set();const cookieName='ilaw_session';
  const choices={gemini:{base:'https://generativelanguage.googleapis.com/v1beta/openai',model:'gemini-3.8-flash'},groq:{base:'https://api.groq.com/openai/v1',model:'openai/gpt-oss-120b'}};
  const credentialStatus=user=>{const row=db.prepare('SELECT provider FROM ai_credentials WHERE user_id=?').get(user);return {provider:row?.provider||'gemini',configured:Boolean(row),aiAvailable:Boolean(row)||provider.available};};
@@ -40,7 +41,7 @@ export async function createApp({database,provider=new AIProvider(),host=process
  const makeJob=async(job,input,user)=>{
   activeJobs.add(job);
   const stage=async name=>{db.prepare("UPDATE jobs SET status='running',stage=?,updated_at=? WHERE id=?").run(name,now(),job);await new Promise(resolve=>setImmediate(resolve));};
-  try{const options={records:curriculumFor(user),provider:providerFor(user),onStage:stage};const plan=input.mode==='ai'?await generateAI(input,options):await generateGuided(input,options);await stage('save');const saved=savePlan(plan,user,{isNew:true,label:plan.metadata.origin});db.prepare("UPDATE jobs SET status='completed',stage='save',plan_id=?,updated_at=? WHERE id=?").run(saved.id,now(),job);}
+  try{const options={records:curriculumFor(user),provider:providerFor(user),technicalDocsProvider,onStage:stage};const plan=input.mode==='ai'?await generateAI(input,options):await generateGuided(input,options);await stage('save');const saved=savePlan(plan,user,{isNew:true,label:plan.metadata.origin});db.prepare("UPDATE jobs SET status='completed',stage='save',plan_id=?,updated_at=? WHERE id=?").run(saved.id,now(),job);}
   catch(e){db.prepare("UPDATE jobs SET status='failed',error=?,updated_at=? WHERE id=?").run(e.status?e.message:'Generation failed safely. Your input is preserved; retry.',now(),job);console.error(`generation_failed: ${e.name}`);}
   finally{activeJobs.delete(job);}
  };
@@ -52,7 +53,7 @@ export async function createApp({database,provider=new AIProvider(),host=process
    if(!publicOrigin&&!/^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(req.headers.host||''))throw statusError(403,'Unrecognized host');
    if(req.headers.origin&&req.headers.origin!==expected)throw statusError(403,'Cross-origin request rejected');
    if(req.headers['sec-fetch-site']==='cross-site'&&method!=='GET')throw statusError(403,'Cross-site request rejected');
-   if(route==='/api/config'&&method==='GET'){send(res,200,{aiAvailable:provider.available,registrationEnabled:process.env.ILAW_REGISTRATION_ENABLED==='true'||db.prepare('SELECT count(*) n FROM users').get().n===0,policyVerified:policySnapshot().status==='operator-reviewed',policy:policySnapshot(),appVersion:'1.0.0',modeLabel:'Guided design is a deterministic draft, not AI generation.'});return;}
+   if(route==='/api/config'&&method==='GET'){send(res,200,{aiAvailable:provider.available,registrationEnabled:process.env.ILAW_REGISTRATION_ENABLED==='true'||db.prepare('SELECT count(*) n FROM users').get().n===0,policyVerified:policySnapshot().status==='operator-reviewed',policy:policySnapshot(),appVersion:'1.0.0',modeLabel:'Guided design is a deterministic draft, not AI generation.',context7Available:technicalDocsProvider.available});return;}
    if(['/api/auth/register','/api/auth/login'].includes(route)&&method==='POST'){
     if(!req.headers.origin)throw statusError(403,'Origin header required');
     limit(`auth:${req.socket.remoteAddress}`,10,60000);const body=await readBody(req);
@@ -139,7 +140,7 @@ export async function createApp({database,provider=new AIProvider(),host=process
      if(action==='regenerate'&&method==='POST'){
       const b=await readBody(req);checkRevision(plan,b.revision);limit(`regenerate:${user}`,20,3600000);
       if(!['replace','simplify','low-resource','interactive','contextualize','improve'].includes(b.action||'replace'))throw new ValidationError('Unknown revision action');
-      const edited=plan.metadata.mode==='ai'?await regenerateAI(plan,b,providerFor(user)):await regenerateGuided(plan,b);validateSessions(edited.sessions,plan.input.sessions);edited.metadata.status='draft';edited.metadata.teacherReviewedAt=null;edited.quality=qualityCheck(edited);send(res,200,{plan:savePlan(edited,user,{expectedRevision:b.revision,label:`${plan.metadata.mode==='ai'?'AI':'Guided'} revision: ${b.section}${b.nodeId?' component':''}`})});return;
+      const edited=plan.metadata.mode==='ai'?await regenerateAI(plan,b,providerFor(user),technicalDocsProvider):await regenerateGuided(plan,b);validateSessions(edited.sessions,plan.input.sessions);edited.metadata.status='draft';edited.metadata.teacherReviewedAt=null;edited.quality=qualityCheck(edited);send(res,200,{plan:savePlan(edited,user,{expectedRevision:b.revision,label:`${plan.metadata.mode==='ai'?'AI':'Guided'} revision: ${b.section}${b.nodeId?' component':''}`})});return;
      }
      if(action==='evidence'&&method==='POST'){
       const b=await readBody(req);checkRevision(plan,b.revision);if(!plan.sessions.some(s=>s.id===b.sessionId))throw new ValidationError('Session not found');
