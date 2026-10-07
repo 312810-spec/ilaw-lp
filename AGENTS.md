@@ -18,3 +18,5 @@ Keep context lean; compare alternatives for meaningful design choices, not every
 small fix. Record main/open-PR/proposed status accurately. During long work save
 meaningful git checkpoints and the next useful handoff in TASK.md about every
 five minutes. FORGE adds no approval gate or mandatory multi-agent ceremony.
+
+For current software facts, load `.agents/skills/context7-docs/SKILL.md`; Context7 is never curriculum authority.

@@ -35,6 +35,23 @@ For administrator configuration, use `AI_API_KEY`, `AI_BASE_URL`, `AI_DESIGN_MOD
 
 Selected wording/translation assistance displays original and proposed text for acceptance; protected numbers and mathematical symbols are checked. Meaning and subject correctness require teacher review. Accepted wording assistance is disclosed and saved in revision history. Initial model IDs, workflow, prompt version and usage are recorded when available.
 
+## Optional current technical grounding
+
+For ICT/programming lessons, an operator can optionally enable **supplemental current software-library documentation** through Context7. This is disabled by default and does not add a production package.
+
+Configure both:
+
+```sh
+ILAW_CONTEXT7_TECHNICAL_REFERENCES=true
+CONTEXT7_API_KEY=...
+```
+
+The runtime integration uses Context7's Search Documentation API. The endpoint and behavior were re-checked against Context7's official documentation on **2026-10-07**; future development must re-check upstream rather than treating that checkpoint as permanent.
+
+A teacher must still opt in for each lesson. The lookup sends only the subject, exact competency/topic and up to four public software-library hints. It deliberately does **not** send learner/class context, teacher identity, lesson references, reflections, evidence, credentials, or private source code. Returned documentation is capped before it enters the model context.
+
+Context7 output is supplemental technical evidence only. It cannot establish curriculum applicability, DepEd policy, competency provenance or lesson correctness, and it never overrides the preserved curriculum source. If Context7 is unavailable, rate-limited or returns no documentation, generation continues without it and the saved plan records that the requested technical grounding was not used.
+
 ## Curriculum, BOW and policy
 
 The central BOW directory covers Kindergarten–Grade 12; its links are not populated competency data. Full embedded BOW retrieval remains incomplete. Grade 11/12 academic/TechPro resources have differing coverage. No all-grade completion claim is made.
@@ -95,3 +112,5 @@ Runtime proposals in that analysis are not implementation claims.
 Use explicit `\( ... \)`, `\[ ... \]` or `$$ ... $$` delimiters for supported fractions, roots, scripts and common symbols. The editor and print preview use MathML; DOCX uses editable Office equations. PDF and PowerPoint use readable linear notation. Unsupported notation keeps its original source. This bounded renderer does not evaluate mathematical answers.
 
 PowerPoint uses the latest saved teacher-reviewed revision. Storyboard roles come from intentions, learner activities, assessment and reflection; teacher instructions, supports and keys are in speaker notes. Slides contain editable text, not screenshots. Review mathematical notation and classroom pacing before use. See [dependency decision](docs/architecture/classroom-export-adr.md).
+
+Context7 technical snapshots (including empty results) are retained with validated generation stages, so resumed stages use the same supplemental evidence. Cancellation aborts a pending lookup before model calls. No live Context7 account call was made during synthetic tests.

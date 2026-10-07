@@ -2,6 +2,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {normalizeInput,validate,stages,ValidationError} from './schema.js';
 import {resolveCompetency} from './curriculum.js';
 import {assemblePlan,checkStageSessionIds} from './engine.js';
+import {Context7TechnicalProvider} from './context7.js';
 export class ProviderError extends Error{constructor(message,{recoverable=false,code='provider'}={}){super(message);this.name='ProviderError';this.status=502;this.recoverable=recoverable;this.code=code;}}
 // Provider schema subsets differ. Keep transport structural; validate every original constraint locally.
 function transportSchema(schema){if(Array.isArray(schema))return schema.map(transportSchema);if(!schema||typeof schema!=='object')return schema;return Object.fromEntries(Object.entries(schema).filter(([key])=>!['minLength','maxLength','minItems','maxItems','minimum','maximum'].includes(key)).map(([key,value])=>[key,transportSchema(value)]));}
@@ -78,10 +79,10 @@ const requests={
  ways:'Design conditional evidence-based follow-up per session: significant difficulty, partial mastery, mastery, advanced mastery. Explicitly connect to actual evidence; never state invented results. Give next-session adaptations. Label pathway as support, developing, mastery or extension. Unique IDs sN-w1 etc; retain objective IDs.',
  review:'Review the structured design for the strongest teacher-facing failure risks: content accuracy, alignment, feasibility, unsupported claims and workload. Return concise concerns and review directions, not a compliance score.'
 };
-function contextFor(stage,input,source,parts){
+function contextFor(stage,input,source,parts,technicalReference=null){
  const curriculum={curriculum:source.curriculum,curriculumVersion:source.curriculumVersion||null,schoolYear:source.schoolYear||input.schoolYear,term:source.term||input.term,week:source.week??null,competency:source.competency,code:source.code,contentStandard:source.contentStandard,performanceStandard:source.performanceStandard,sourceStatus:source.source.status,sourceTitle:source.source.title,sourceUrl:source.source.url||null,sourceSection:source.source.section||null,sourceExcerpt:source.source.excerpt||null};
  const classroom=classroomContext(input);
- const base={curriculum,classroom};
+ const base={curriculum,classroom};if(technicalReference)base.technicalReference={provider:technicalReference.provider,classification:technicalReference.classification,libraries:technicalReference.libraries,text:technicalReference.text};
  const dependencies={unpack:[],context:['unpack'],outcomes:['unpack','context'],assessment:['outcomes','unpack'],experiences:['outcomes','assessment','context'],differentiation:['outcomes','experiences'],ways:['outcomes','assessment'],review:['outcomes','assessment','experiences','differentiation','ways']};
  for(const key of dependencies[stage])base[key]=parts[key];return base;
 }
@@ -89,15 +90,26 @@ function validateStageLinks(output,outcomes,stage){
  if(!['assessment','experiences','ways'].includes(stage))return;
  for(const session of output.sessions){const objectives=outcomes.sessions.find(s=>s.id===session.id).objectives;const ids=new Set(objectives.map(o=>o.id));const nodes=session[stage];const nodeIds=new Set();for(const node of nodes){if(nodeIds.has(node.id)||ids.has(node.id)||node.id===session.id)throw new ValidationError('Use unique IDs for every component.');nodeIds.add(node.id);if(node.objectiveIds.some(id=>!ids.has(id)))throw new ValidationError('Link each component only to existing objectives in its session.');}if(objectives.some(o=>!nodes.some(n=>n.objectiveIds.includes(o.id))))throw new ValidationError('Every objective needs an activity, assessment and conditional next-step link.');}
 }
-export async function generateAI(raw,{records,provider=new AIProvider(),onStage=async()=>{},checkpoint={}}={}){
+async function technicalReferenceFor(input,source,technicalDocsProvider,onStage=async()=>{},signal){
+ if(!input.technicalReference||!technicalDocsProvider?.available)return null;
+ signal?.throwIfAborted();await onStage('technical-docs');
+ const result=await technicalDocsProvider.lookup({subject:input.subject,competency:source.competency||input.competency,libraries:input.technicalLibraries,...(signal?{signal}:{})});signal?.throwIfAborted();return result;
+}
+function recordTechnicalReference(plan,input,technicalReference){
+ if(input.technicalReference){plan.metadata.technicalReference={requested:true,used:Boolean(technicalReference),provider:technicalReference?.provider||'Context7',classification:'supplemental technical documentation',libraries:technicalReference?.libraries||[]};if(technicalReference&&!plan.metadata.aiDeclaration.includes('Context7'))plan.metadata.aiDeclaration+=' Supplemental software documentation from Context7 informed technical examples only; it did not establish curriculum or policy authority.';}
+ return plan;
+}
+export async function generateAI(raw,{records,provider=new AIProvider(),onStage=async()=>{},checkpoint={},technicalDocsProvider=new Context7TechnicalProvider(),technicalReference=undefined}={}){
  if(!provider.available)throw new ProviderError('Live AI is not configured. Select guided design or configure a server-side credential.');
- const input=normalizeInput({...raw,mode:'ai'});if(input.aiWorkflow==='ilawcraft'&&!checkpoint.parts){try{return await generateIlawCraft(input,{records,provider,onStage});}catch(e){if(!(e instanceof ProviderError)||!e.recoverable)throw e;await onStage('recovery');const plan=await generateAI({...input,aiWorkflow:'staged'},{records,provider,onStage,checkpoint});if(e.usage){for(const key of ['input','output','calls','unknown'])plan.metadata.tokens[key]+=e.usage[key]||0;}plan.input.aiWorkflow='ilawcraft';plan.metadata.aiWorkflow='staged-recovery';plan.metadata.recovery='Complete-plan output failed validation or was truncated; generated through smaller validated AI stages.';return plan;}}await onStage('resolve');const source=resolveCompetency(input,records);const parts={};let usage={input:0,output:0,calls:0,unknown:0};
+ const input=normalizeInput({...raw,mode:'ai'});await onStage('resolve');const source=resolveCompetency(input,records);
+ if(technicalReference===undefined){technicalReference=checkpoint.parts?.__technicalReference?checkpoint.parts.__technicalReference.output:await technicalReferenceFor(input,source,technicalDocsProvider,onStage,provider.signal);if(input.technicalReference&&!checkpoint.parts?.__technicalReference)await checkpoint.save?.('__technicalReference',{output:technicalReference});}
+ if(input.aiWorkflow==='ilawcraft'&&!checkpoint.parts){try{return await generateIlawCraft(input,{records,provider,onStage,source,technicalReference});}catch(e){if(!(e instanceof ProviderError)||!e.recoverable)throw e;await onStage('recovery');const plan=await generateAI({...input,aiWorkflow:'staged'},{records,provider,onStage,checkpoint,technicalDocsProvider,technicalReference});if(e.usage){for(const key of ['input','output','calls','unknown'])plan.metadata.tokens[key]+=e.usage[key]||0;}plan.input.aiWorkflow='ilawcraft';plan.metadata.aiWorkflow='staged-recovery';plan.metadata.recovery='Complete-plan output failed validation or was truncated; generated through smaller validated AI stages.';return plan;}}const parts={};let usage={input:0,output:0,calls:0,unknown:0};
  for(const stage of Object.keys(requests)){
   await onStage(stage);
   const validateOutput=output=>{rejectUnsupportedClaims(output,source);if(stage==='outcomes'&&(output.sessions.length!==input.sessions||output.sessions.some((s,i)=>s.id!==`s${i+1}`)))throw new ValidationError('Return the exact requested session IDs s1..sN.');if(parts.outcomes&&stage!=='outcomes'){checkStageSessionIds(output,parts.outcomes,stage);validateStageLinks(output,parts.outcomes,stage);}if(stage==='experiences'&&output.sessions.some(s=>s.experiences.reduce((n,a)=>n+a.minutes,0)!==input.duration))throw new ValidationError('Activity minutes must sum exactly to the requested duration for each session.');};
   const retained=checkpoint.parts?.[stage];
   let result;if(retained){validate(retained.output,stages[stage]);validateOutput(retained.output);result=retained;}else{
-  result=await provider.generateStructured({stage,schema:stages[stage],context:contextFor(stage,input,source,parts),instruction:requests[stage],strong:!['unpack','context'].includes(stage),onProgress:onStage,validateOutput});
+  result=await provider.generateStructured({stage,schema:stages[stage],context:contextFor(stage,input,source,parts,technicalReference),instruction:requests[stage],strong:!['unpack','context'].includes(stage),onProgress:onStage,validateOutput});
    await checkpoint.save?.(stage,result);
   }
   rejectUnsupportedClaims(result.output,source);parts[stage]=result.output;
@@ -105,20 +117,20 @@ export async function generateAI(raw,{records,provider=new AIProvider(),onStage=
   if(stage==='outcomes'&&(result.output.sessions.length!==input.sessions||result.output.sessions.some((s,i)=>s.id!==`s${i+1}`)))throw new ProviderError('AI outcomes returned an invalid session sequence.');
   usage.calls+=result.attempts||1;if(result.usage){usage.input+=result.usage.input;usage.output+=result.usage.output;}else usage.unknown++;usage.unknown+=result.unknown||0;
  }
- parts.tokens=usage;parts.models=[provider.designModel,provider.fastModel];const plan=assemblePlan(input,source,parts,'ai');if(checkpoint.parts){plan.metadata.retainedStages=Object.keys(checkpoint.parts);if(input.aiWorkflow==='ilawcraft'){plan.metadata.aiWorkflow='staged-recovery';plan.metadata.recovery='Resumed generation using retained validated stages.';}}if(plan.quality.counts.error)throw new ProviderError('AI draft still has invalid alignment after recovery. Your input is safe.',{code:'output'});return plan;
+ parts.tokens=usage;parts.models=[provider.designModel,provider.fastModel];const plan=assemblePlan(input,source,parts,'ai');if(checkpoint.parts){plan.metadata.retainedStages=Object.keys(checkpoint.parts).filter(s=>s!=='__technicalReference');if(input.aiWorkflow==='ilawcraft'){plan.metadata.aiWorkflow='staged-recovery';plan.metadata.recovery='Resumed generation using retained validated stages.';}}if(plan.quality.counts.error)throw new ProviderError('AI draft still has invalid alignment after recovery. Your input is safe.',{code:'output'});return recordTechnicalReference(plan,input,technicalReference);
 }
-export async function regenerateAI(plan,target,provider=new AIProvider()){
+export async function regenerateAI(plan,target,provider=new AIProvider(),technicalDocsProvider=new Context7TechnicalProvider()){
  if(target.instructions!=null&&(typeof target.instructions!=='string'||target.instructions.length>1000))throw new ValidationError('Revision instructions must be text of at most 1000 characters');
- const revisionRequest=target.instructions?.trim()||'';
+ const revisionRequest=target.instructions?.trim()||'';const technicalReference=await technicalReferenceFor(plan.input,plan.source,technicalDocsProvider);
  const session=plan.sessions.find(s=>s.id===target.sessionId);if(!session)throw new ValidationError('Session not found');
  const mapping={intentions:'outcomes',experiences:'experiences',assessment:'assessment',differentiation:'differentiation',ways:'ways'};const stage=mapping[target.section];
  if(target.section==='session'){
   const previous=plan.sessions[plan.sessions.indexOf(session)-1];
-  const fresh=await generateAI({...plan.input,sessions:1,instructions:plan.input.instructions+(revisionRequest?`\nTeacher revision request: ${revisionRequest}`:'')+(previous?`\nApp continuity context (not observed learner results): previous session objective: ${previous.objectives.map(o=>o.text).join('; ')}. Teacher-reported aggregate evidence, when recorded: ${JSON.stringify(plan.evidenceSummary?.[previous.id]||null)}. Adapt from these observations, treating unobserved learners as unknown; do not assume mastery.`:'')},{records:[plan.source],provider});
+  const fresh=await generateAI({...plan.input,sessions:1,instructions:plan.input.instructions+(revisionRequest?`\nTeacher revision request: ${revisionRequest}`:'')+(previous?`\nApp continuity context (not observed learner results): previous session objective: ${previous.objectives.map(o=>o.text).join('; ')}. Teacher-reported aggregate evidence, when recorded: ${JSON.stringify(plan.evidenceSummary?.[previous.id]||null)}. Adapt from these observations, treating unobserved learners as unknown; do not assume mastery.`:'')},{records:[plan.source],provider,technicalDocsProvider,technicalReference});
   const updated=structuredClone(plan);const index=updated.sessions.findIndex(s=>s.id===session.id);const generated=fresh.sessions[0];
   const remap=id=>id.replace(/^s1(?=-|$)/,session.id);generated.id=session.id;generated.title=session.title;
   for(const list of [generated.objectives,generated.experiences,generated.assessment,generated.ways])for(const node of list){node.id=remap(node.id);if(node.objectiveIds)node.objectiveIds=node.objectiveIds.map(remap);}
-  updated.sessions[index]=generated;updated.metadata.lastRegenerationTokens=fresh.metadata.tokens;updated.metadata.lastRegenerationModels=fresh.metadata.models;return updated;
+  updated.sessions[index]=generated;updated.metadata.lastRegenerationTokens=fresh.metadata.tokens;updated.metadata.lastRegenerationModels=fresh.metadata.models;return recordTechnicalReference(updated,plan.input,technicalReference);
  }
  if(!stage)throw new ValidationError('Use an individual ILAW section or session for AI regeneration');
  let schema,context,instruction;
@@ -126,10 +138,10 @@ export async function regenerateAI(plan,target,provider=new AIProvider()){
  if(target.nodeId){
   const original=session[field]?.find(x=>x.id===target.nodeId);if(!original)throw new ValidationError('Component not found');
   schema=target.section==='intentions'?stages.outcomes.properties.sessions.items.properties.objectives.items:stages[stage].properties.sessions.items.properties[field].items;
-  context={classroom:classroomContext(plan.input),competency:plan.source.competency,objectives:session.objectives,teacherReportedEvidence:plan.evidenceSummary?.[session.id]||null,component:original};
+  context={classroom:classroomContext(plan.input),competency:plan.source.competency,objectives:session.objectives,teacherReportedEvidence:plan.evidenceSummary?.[session.id]||null,component:original,...(technicalReference?{technicalReference}:{})};
   instruction=`Revise only this ${target.section} component: ${target.action||'improve'}. Preserve exact component ID, objective IDs, minutes and all unrequested properties. Never replace other lesson sections.`;
  }else{
-  schema=stages[stage];context={classroom:classroomContext(plan.input),competency:plan.source.competency,session:{id:session.id,title:session.title,keyConcept:session.keyConcept,objectives:session.objectives,assessment:session.assessment}};
+  schema=stages[stage];context={classroom:classroomContext(plan.input),competency:plan.source.competency,session:{id:session.id,title:session.title,keyConcept:session.keyConcept,objectives:session.objectives,assessment:session.assessment},...(technicalReference?{technicalReference}:{})};
   instruction=`${requests[stage]} Return ONLY session ${session.id}. Preserve all existing IDs and links where possible. Revise to ${target.action||'improve'}.`;
  }
  if(revisionRequest)context.revisionRequest=revisionRequest;
@@ -137,20 +149,20 @@ export async function regenerateAI(plan,target,provider=new AIProvider()){
  rejectUnsupportedClaims(output,plan.source);const result=structuredClone(plan);const edited=result.sessions.find(s=>s.id===session.id);
  if(target.nodeId){const index=edited[field].findIndex(x=>x.id===target.nodeId);const original=edited[field][index];if(output.id!==original.id)throw new ProviderError('AI changed the component ID; revision was rejected.');if(field!=='objectives'&&JSON.stringify([...output.objectiveIds].sort())!==JSON.stringify([...original.objectiveIds].sort()))throw new ProviderError('AI changed protected objective links; revision rejected.');if(field==='experiences'&&output.minutes!==original.minutes)throw new ProviderError('AI changed protected timing; revision rejected.');edited[field][index]=output;}
  else{if(output.sessions.length!==1||output.sessions[0].id!==session.id)throw new ProviderError('AI returned the wrong session; revision rejected.');if(field==='objectives'){edited.objectives=output.sessions[0].objectives;edited.keyConcept=output.sessions[0].keyConcept;}else edited[field]=output.sessions[0][field];}
- result.metadata.lastRegenerationTokens=usage;result.metadata.lastRegenerationModel=model||provider.designModel;return result;
+ result.metadata.lastRegenerationTokens=usage;result.metadata.lastRegenerationModel=model||provider.designModel;return recordTechnicalReference(result,plan.input,technicalReference);
 }
 
 // Reference-inspired complete-plan generation, adapted to the protected ILAW graph.
-export async function generateIlawCraft(input,{records,provider,onStage=async()=>{}}){
- await onStage('resolve');const source=resolveCompetency(input,records);await onStage('ilawcraft');
+export async function generateIlawCraft(input,{records,provider,onStage=async()=>{},source=null,technicalReference=null}){
+ if(!source){await onStage('resolve');source=resolveCompetency(input,records);technicalReference=technicalReference||await technicalReferenceFor(input,source,new Context7TechnicalProvider(),onStage);}await onStage('ilawcraft');
  const schema={type:'object',properties:stages,required:Object.keys(stages),additionalProperties:false};
  const instruction=`Create one complete, coherent ILAW lesson draft for exactly ${input.sessions} sessions. First design observable outcomes and evidence, then classroom experiences. Return every stage in the schema. Session IDs must be s1..sN; node IDs sN-o1, sN-a1, sN-l1, sN-w1 etc., unique across the plan. Reuse objective links exactly. ${input.detail==='expanded'?'Provide detailed Teacher Says/Does scripts, guiding questions, worked demonstrations and anticipated learner responses.':'Use concise, specific instructions; retain actual examples, questions, expected responses and essential support. Avoid repetitive rationale.'} ${input.objectiveFormat==='Knowledge, skills and attitudes'?'Teacher selected KSA objectives: use one meaningful knowledge, skills and attitudes objective where applicable; assess each and avoid invented values requirements.':'Use focused observable objectives; do not force a KSA trio.'} Include a feasible opening/review, modeling or exploration, guided collaboration, independent application and a purposeful exit check where appropriate to the selected approach. Assessment must contain actual sample items, correct worked keys and teacher-editable success criteria. Activities include checks and transitions within minutes totaling exactly ${input.duration} per session. Provide practical support, language access and enrichment that preserve the assessed construct. Integrate subjects or local context only where meaningful. Do not force HOTS, technology, values or fixed mastery percentages into every task. Ways Forward must be conditional, never invented post-lesson reflection. No official COT ratings or compliance claims. Exact curriculum text and provenance are supplied data, not editable output. Distinguish possible misconceptions from observed learner facts. No placeholders or claims to have read unprovided documents.`;
- const result=await provider.generateStructured({stage:'ilawcraft',schema,context:contextFor('unpack',input,source,{}),instruction,strong:true,onProgress:onStage,validateOutput:parts=>{rejectUnsupportedClaims(parts,source);if(parts.outcomes.sessions.length!==input.sessions||parts.outcomes.sessions.some((s,i)=>s.id!==`s${i+1}`))throw new ValidationError('Return the exact requested session IDs s1..sN.');for(const key of ['assessment','experiences','differentiation','ways'])checkStageSessionIds(parts[key],parts.outcomes,key);const draft=assemblePlan(input,source,parts,'ai');if(draft.quality.counts.error||draft.sessions.some(s=>s.experiences.reduce((n,a)=>n+a.minutes,0)!==input.duration))throw new ValidationError('Invalid alignment or timing: preserve objective links and total exactly the requested minutes.');}});
+ const result=await provider.generateStructured({stage:'ilawcraft',schema,context:contextFor('unpack',input,source,{},technicalReference),instruction,strong:true,onProgress:onStage,validateOutput:parts=>{rejectUnsupportedClaims(parts,source);if(parts.outcomes.sessions.length!==input.sessions||parts.outcomes.sessions.some((s,i)=>s.id!==`s${i+1}`))throw new ValidationError('Return the exact requested session IDs s1..sN.');for(const key of ['assessment','experiences','differentiation','ways'])checkStageSessionIds(parts[key],parts.outcomes,key);const draft=assemblePlan(input,source,parts,'ai');if(draft.quality.counts.error||draft.sessions.some(s=>s.experiences.reduce((n,a)=>n+a.minutes,0)!==input.duration))throw new ValidationError('Invalid alignment or timing: preserve objective links and total exactly the requested minutes.');}});
  const parts=result.output;rejectUnsupportedClaims(parts,source);
  if(parts.outcomes.sessions.length!==input.sessions||parts.outcomes.sessions.some((s,i)=>s.id!==`s${i+1}`))throw new ProviderError('AI returned an invalid session sequence.');
  for(const key of ['assessment','experiences','differentiation','ways'])checkStageSessionIds(parts[key],parts.outcomes,key);
  parts.tokens={input:result.usage?.input||0,output:result.usage?.output||0,calls:result.attempts||1,unknown:result.unknown??(result.usage?0:1)};parts.models=[result.model||provider.designModel];
  const plan=assemblePlan(input,source,parts,'ai');plan.metadata.promptVersion='ilawcraft-adapted-v1';plan.metadata.aiWorkflow='ilawcraft';
- if(plan.quality.counts.error||plan.sessions.some(s=>s.experiences.reduce((n,a)=>n+a.minutes,0)!==input.duration))throw new ProviderError('AI draft has invalid alignment or timing. No invalid draft was saved. Narrow the scope and retry.');
+ recordTechnicalReference(plan,input,technicalReference);if(plan.quality.counts.error||plan.sessions.some(s=>s.experiences.reduce((n,a)=>n+a.minutes,0)!==input.duration))throw new ProviderError('AI draft has invalid alignment or timing. No invalid draft was saved. Narrow the scope and retry.');
  return plan;
 }
