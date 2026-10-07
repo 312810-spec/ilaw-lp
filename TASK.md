@@ -1,9 +1,9 @@
 # ILAW checkpoint — 2026-10-08 (Philippines)
 
-DONE / VERIFIED: PR7 merged into main as fe8af54. GitHub native browser run 37652082144 passed; desktop/mobile screenshots inspected; downloaded DOCX/PDF preserve the latest teacher criterion.
+DONE / VERIFIED: PR7 merged as fe8af54; native browser passed. Generation controls PR8 contains worker leases, cancellation, retained-data cleanup, 27-call durable budget/accounting, persistent connection-test state and AI-first explicit preferences. Initial browser run found a stale submit label after mode selection; fixed and rerun pending.
 
-IN PROGRESS: feat/generation-controls adds SQLite worker ownership/heartbeat, cancellation/abort, safe takeover, seven-day checkpoint content cleanup, persistent 27-request budget and usage ledger, plus AI-first defaults that preserve explicit teacher mode preference. Four new job-control tests pass. Full suite/static checks running.
+DONE LOCALLY: durable revision previews; teacher Accept/Keep current; stale/expired proposals rejected; saved lesson unchanged until acceptance. Preview survives reopening and displays teacher-readable section differences. Existing immediate-regenerate API retained for compatibility. 74 automated tests and static checks passed before final mode-label fix; client checks rerun afterward.
 
-NEXT: persistent connection-test state, browser cancellation/default checks, publish and inspect CI. Continue revision preview and classroom export backlog after this reliability milestone.
+NEXT: finish PR8 CI, publish preview branch, inspect native preview/cancellation/export journey, merge verified work. Continue mathematical notation and classroom presentation export backlog.
 
-BLOCKED: live provider benchmark needs an available configured credential; signed DO016 PDF fetch returns 403, official all-grade BOW data is not present. No fabricated policy/curriculum activation. Reviewed curriculum, rich mathematics, editable PPTX and free-cloud migration remain pending.
+BLOCKED: live-provider quality benchmark without configured key; signed DO016 PDF 403; no reviewed all-grade official BOW corpus. No fabricated source applicability. Free-cloud hosting remains unprovisioned.

@@ -138,7 +138,7 @@ export async function createApp({database,provider=new AIProvider(),host=process
     }
     const jobMatch=route.match(/^\/api\/jobs\/([a-f0-9-]{36})$/);
     if(jobMatch&&method==='GET'){jobs.recover();const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(jobMatch[1],user);if(!job)throw statusError(404,'Generation not found');send(res,200,{id:job.id,status:job.status,stage:job.stage,label:stageLabels[job.stage]||job.stage,planId:job.plan_id,error:job.error,usage:jobs.totals(job.id),input:['failed','cancelled'].includes(job.status)?JSON.parse(job.input):undefined});return;}
-    const planMatch=route.match(/^\/api\/plans\/([a-f0-9-]{36})(?:\/(revisions|restore|review|duplicate|regenerate|retime|evidence|reflection|refine|docx|pdf|print))?$/);
+    const planMatch=route.match(/^\/api\/plans\/([a-f0-9-]{36})(?:\/(revisions|restore|review|duplicate|regenerate|propose|proposal|accept|discard|retime|evidence|reflection|refine|docx|pdf|print))?$/);
     if(planMatch){const id=planMatch[1],action=planMatch[2];const plan=requirePlan(id,user);
      if(!action&&method==='GET'){plan.quality=qualityCheck(plan);send(res,200,{plan});return;}
      if(!action&&method==='PUT'){
@@ -156,10 +156,27 @@ export async function createApp({database,provider=new AIProvider(),host=process
       const b=await readBody(req);checkRevision(plan,b.revision);if(b.confirm!==true)throw new ValidationError('Confirm that you reviewed the draft and its warnings.');plan.quality=qualityCheck(plan);if(plan.quality.counts.error)throw statusError(422,'Resolve the disconnected alignment links before marking this plan reviewed.');plan.metadata.status='reviewed';plan.metadata.teacherReviewedAt=now();send(res,200,{plan:savePlan(plan,user,{expectedRevision:plan.revision,label:'Teacher-reviewed'})});return;
      }
      if(action==='duplicate'&&method==='POST'){const copy=structuredClone(plan);copy.id=crypto.randomUUID();copy.title=`${plan.title.slice(0,185)} (copy)`;delete copy.evidenceSummary;delete copy.reflections;copy.metadata.status='draft';copy.metadata.createdAt=now();copy.metadata.teacherReviewedAt=null;copy.quality=qualityCheck(copy);send(res,201,{plan:savePlan(copy,user,{isNew:true,label:'Duplicated draft'})});return;}
-     if(action==='regenerate'&&method==='POST'){
+     if(action==='proposal'&&method==='GET'){
+      db.prepare('DELETE FROM plan_proposals WHERE created_at<?').run(new Date(Date.now()-86400000).toISOString());
+      const proposal=db.prepare('SELECT * FROM plan_proposals WHERE plan_id=? AND user_id=?').get(id,user);send(res,200,{proposal:proposal?{id:proposal.id,baseRevision:proposal.base_revision,label:proposal.label,createdAt:proposal.created_at,plan:JSON.parse(proposal.payload)}:null});return;
+     }
+     if(['accept','discard'].includes(action)&&method==='POST'){
+      const b=await readBody(req);const proposal=db.prepare('SELECT * FROM plan_proposals WHERE id=? AND plan_id=? AND user_id=?').get(b.proposalId||'',id,user);if(!proposal)throw statusError(404,'Proposal not found');
+      if(action==='discard'){db.prepare('DELETE FROM plan_proposals WHERE id=? AND user_id=?').run(proposal.id,user);send(res,200,{ok:true});return;}
+      checkRevision(plan,b.revision);if(proposal.base_revision!==plan.revision||Date.now()-Date.parse(proposal.created_at)>86400000)throw statusError(409,'This proposal is stale or expired. Keep your current lesson and prepare a new proposal.');
+      const edited=JSON.parse(proposal.payload);validateSessions(edited.sessions,plan.input.sessions);edited.quality=qualityCheck(edited);const saved=savePlan(edited,user,{expectedRevision:b.revision,label:proposal.label,onSaved:()=>db.prepare('DELETE FROM plan_proposals WHERE id=?').run(proposal.id)});send(res,200,{plan:saved});return;
+     }
+     if(['regenerate','propose'].includes(action)&&method==='POST'){
       const b=await readBody(req);checkRevision(plan,b.revision);limit(`regenerate:${user}`,20,3600000);
       if(!['replace','simplify','low-resource','interactive','contextualize','improve'].includes(b.action||'replace'))throw new ValidationError('Unknown revision action');
-      const edited=plan.metadata.mode==='ai'?await regenerateAI(plan,b,providerFor(user)):await regenerateGuided(plan,b);validateSessions(edited.sessions,plan.input.sessions);edited.metadata.status='draft';edited.metadata.teacherReviewedAt=null;edited.quality=qualityCheck(edited);send(res,200,{plan:savePlan(edited,user,{expectedRevision:b.revision,label:`${plan.metadata.mode==='ai'?'AI':'Guided'} revision: ${b.section}${b.nodeId?' component':''}`})});return;
+      const edited=plan.metadata.mode==='ai'?await regenerateAI(plan,b,providerFor(user)):await regenerateGuided(plan,b);validateSessions(edited.sessions,plan.input.sessions);edited.metadata.status='draft';edited.metadata.teacherReviewedAt=null;edited.quality=qualityCheck(edited);
+      const label=`${plan.metadata.mode==='ai'?'AI':'Guided'} revision: ${b.section}${b.nodeId?' component':''}`;
+      if(action==='propose'){
+       const proposalId=crypto.randomUUID();const serialized=JSON.stringify(edited);if(serialized.length>350000)throw statusError(400,'Proposal exceeds the supported document size');
+       storage.transaction(()=>{checkRevision(requirePlan(id,user),b.revision);db.prepare('INSERT INTO plan_proposals VALUES (?,?,?,?,?,?,?) ON CONFLICT(plan_id) DO UPDATE SET id=excluded.id,base_revision=excluded.base_revision,payload=excluded.payload,label=excluded.label,created_at=excluded.created_at').run(proposalId,id,user,b.revision,serialized,label,now());});
+       send(res,200,{proposal:{id:proposalId,baseRevision:b.revision,label,plan:edited}});return;
+      }
+      send(res,200,{plan:savePlan(edited,user,{expectedRevision:b.revision,label})});return;
      }
      if(action==='evidence'&&method==='POST'){
       const b=await readBody(req);checkRevision(plan,b.revision);if(!plan.sessions.some(s=>s.id===b.sessionId))throw new ValidationError('Session not found');
