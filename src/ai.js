@@ -101,7 +101,7 @@ export async function generateAI(raw,{records,provider=new AIProvider(),onStage=
   if(stage==='outcomes'&&(result.output.sessions.length!==input.sessions||result.output.sessions.some((s,i)=>s.id!==`s${i+1}`)))throw new ProviderError('AI outcomes returned an invalid session sequence.');
   usage.calls+=result.attempts||1;if(result.usage){usage.input+=result.usage.input;usage.output+=result.usage.output;}else usage.unknown++;usage.unknown+=result.unknown||0;
  }
- parts.tokens=usage;parts.models=[provider.designModel,provider.fastModel];const plan=assemblePlan(input,source,parts,'ai');if(plan.quality.counts.error)throw new ProviderError('AI draft still has invalid alignment after recovery. Your input is safe.',{code:'output'});return plan;
+ parts.tokens=usage;parts.models=[provider.designModel,provider.fastModel];const plan=assemblePlan(input,source,parts,'ai');if(checkpoint.parts){plan.metadata.retainedStages=Object.keys(checkpoint.parts);if(input.aiWorkflow==='ilawcraft'){plan.metadata.aiWorkflow='staged-recovery';plan.metadata.recovery='Resumed generation using retained validated stages.';}}if(plan.quality.counts.error)throw new ProviderError('AI draft still has invalid alignment after recovery. Your input is safe.',{code:'output'});return plan;
 }
 export async function regenerateAI(plan,target,provider=new AIProvider()){
  if(target.instructions!=null&&(typeof target.instructions!=='string'||target.instructions.length>1000))throw new ValidationError('Revision instructions must be text of at most 1000 characters');
