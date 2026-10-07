@@ -14,7 +14,7 @@ Context7 has two distinct roles in ILAW:
 ## Freshness gate
 
 Before changing Context7 integration behavior, re-check Context7's official CLI/API documentation and current release/changelog. The implementation was last verified against official docs on **2026-10-07**:
-- CLI package: `ctx7`; observed release `0.5.12` at that checkpoint only.
+- CLI package: `ctx7`; observed release `0.5.13` at that checkpoint only.
 - Runtime Search Documentation endpoint: `GET https://context7.com/api/v3/search`.
 - Search supports a focused `query`, optional library hints, and text/JSON response modes.
 
