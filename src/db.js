@@ -16,11 +16,13 @@ export function openDatabase(filename=process.env.ILAW_DB_PATH||'./data/ilaw.sql
  CREATE TABLE IF NOT EXISTS curriculum (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, payload TEXT NOT NULL);
  PRAGMA user_version = 1;
  `);
- db.prepare("UPDATE jobs SET status='failed',error='Generation was interrupted by a server restart. Your input is preserved; resume to reuse validated stages.' WHERE status IN ('queued','running')").run();
+ db.exec('CREATE TABLE IF NOT EXISTS job_workers (job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE,owner TEXT NOT NULL,expires_at INTEGER NOT NULL)');
+ db.prepare("UPDATE jobs SET status='failed',error='Generation was interrupted. Your input and validated stages are retained; resume when ready.' WHERE status IN ('queued','running') AND NOT EXISTS (SELECT 1 FROM job_workers w WHERE w.job_id=jobs.id AND w.expires_at>?)").run(Date.now());
  if(filename!==':memory:'){fs.chmodSync(filename,0o600);for(const suffix of ['-wal','-shm'])if(fs.existsSync(filename+suffix))fs.chmodSync(filename+suffix,0o600);}
  const secretPath=filename+'.keys';let credentialKey;
  if(filename===':memory:')credentialKey=randomBytes(32);else{try{fs.writeFileSync(secretPath,randomBytes(32),{flag:'wx',mode:0o600});}catch(e){if(e.code!=='EEXIST')throw e;}fs.chmodSync(secretPath,0o600);credentialKey=fs.readFileSync(secretPath);if(credentialKey.length!==32)throw Error('Invalid credential encryption key');}
  db.exec('CREATE TABLE IF NOT EXISTS ai_credentials (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, provider TEXT NOT NULL, secret TEXT NOT NULL)');
+ db.exec('CREATE TABLE IF NOT EXISTS ai_probes (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, fingerprint TEXT NOT NULL, model TEXT NOT NULL, tested_at TEXT NOT NULL, success INTEGER NOT NULL)');
  db.exec('CREATE TABLE IF NOT EXISTS job_checkpoints (job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
  const transaction=fn=>{db.exec('BEGIN IMMEDIATE');try{const v=fn();db.exec('COMMIT');return v;}catch(e){db.exec('ROLLBACK');throw e;}};
  const getPlan=(id,user)=>{const r=db.prepare('SELECT * FROM plans WHERE id=? AND user_id=?').get(id,user);return r?{...JSON.parse(r.payload),revision:r.revision}:null;};
