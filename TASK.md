@@ -1,3 +1,9 @@
+# Adaptive AI generation — implementation checkpoint
+
+Branch: feat/adaptive-ai-generation, baseline main 60326c9. Requested study is being implemented. Provider/body deadlines, Gemini reasoning budgets, bounded jitter/compatibility caching, safe owned diagnostic summaries, candidate-section retention with dependency invalidation, session-based weekly generation and pending automatic critique are implemented. Eighteen focused tests passed; full suite found only the expected prompt-version assertion update (now corrected). Static checks passed at the checkpoint. No live credentials in this executor; user's local Gemini probe succeeded but cannot be reused here. Screenshot bytes unavailable.
+
+Next: optional isolated native Gemini background prototype, privacy/ownership diagnostics tests, full regression tests and native browser CI; publish feature branch and report implementation/live limits. Retain 27-call durable ledger, cancellation, atomic save and immutable curriculum provenance. Do not claim subject accuracy or policy compliance. Previous merged work below remains delivered.
+
 # ILAW continuation — 8 October 2026 (Philippines)
 
 MERGED: main 426764409bc3c7e8bf2b22001fda984463575f0d. Native browser run 37698610239 passed all 100 automated tests, static checks and real teacher journey. Delivered exact bounded arithmetic, derived reversible LessonIR, saved editable/stale storyboards, canonical owner images, editable coordinate source, private/learner exports, class adaptations, planned observation registry/mappings, generation idempotency, IndexedDB/draft recovery, encrypted consistent backup/restore, 99-file pending BOW review queue/scoped FTS, 30-brief offline benchmark and tested isolated PostgreSQL cloud save spike. Production audit clean; sample DOCX/XML, PDF images/captions and ten PPTX slides rendered/inspected.
