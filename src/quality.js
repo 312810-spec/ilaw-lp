@@ -2,6 +2,7 @@ const contentTokens=s=>(s.toLowerCase().match(/[a-z]{4,}/g)||[]).filter(x=>!['wi
 export function qualityCheck(plan){
  const checks=[]; const add=(severity,code,message,target,detail='')=>checks.push({severity,code,message,target,detail});
  const input=plan.input;
+ if(plan.metadata.automaticReview==='pending')add('warning','automatic-review-pending','AI content draft is complete; automatic critique is pending','review','Teacher must review subject accuracy, worked keys and classroom feasibility before approving.');
  if(plan.metadata.timeReallocated)add('warning','retimed','Minutes were reallocated while preserving teacher text','s1:experiences','Review task demand, objectives and transition feasibility; a matching time sum alone is not sufficient.');
  if(plan.metadata.mode==='guided'&&(/blend|consonant.vowel.consonant/i.test(input.competency))&&!/english/i.test(input.language))add('warning','reading-language','Guided word set uses English sounds; adapt for the taught language','s1:assessment','Replace the words and expected responses with a verified target-language word set.');
  if(plan.sessions.some(s=>s.assessment.some(a=>/Teacher: supply|Teacher must supply|Teacher-specified/.test(a.prompt+' '+a.answerKey+' '+a.method))))add('warning','custom-task','Custom competency needs a subject-specific task, expected response and measurable criteria','s1:assessment','Guided mode provides a planning scaffold for arbitrary content. Complete these fields before classroom use.');

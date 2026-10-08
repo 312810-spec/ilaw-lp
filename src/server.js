@@ -48,12 +48,12 @@ export async function createApp({database,provider=new AIProvider(),technicalDoc
  const checkRevision=(plan,revision)=>{if(!Number.isInteger(revision)||plan.revision!==revision)throw statusError(409,'This lesson has a newer revision. Reload the latest version before saving. Your current edits remain in recovery.');};
  const makeJob=async(job,input,user)=>{
   try{jobs.ensure(job);}catch{return;}
-  activeJobs.add(job);const controller=new AbortController();controllers.set(job,controller);
+  activeJobs.add(job);const controller=new AbortController();controllers.set(job,controller);const generationSignal=AbortSignal.any([controller.signal,AbortSignal.timeout(20*60*1000)]);
   const heartbeat=setInterval(()=>{try{jobs.heartbeat(job);}catch{controller.abort();}},10000);heartbeat.unref();
   const stage=async name=>{controller.signal.throwIfAborted();jobs.stage(job,name);await new Promise(resolve=>setImmediate(resolve));};
   try{const jobRecords=curriculumFor(user),jobProvider=Object.create(providerFor(user));
-   jobProvider.signal=controller.signal;jobProvider.onAttempt=async()=>jobs.attempt(job);jobProvider.onUsage=async value=>jobs.usage(job,value);
-   const fingerprint=hash(JSON.stringify({contract:'staged-retention-v1',input,source:resolveCompetency(input,jobRecords),models:[jobProvider.base,jobProvider.designModel,jobProvider.fastModel]}));
+   jobProvider.signal=generationSignal;jobProvider.onDiagnostic=async event=>jobs.diagnostic(job,event);jobProvider.onAttempt=async()=>jobs.attempt(job);jobProvider.onUsage=async value=>jobs.usage(job,value);
+   const fingerprint=hash(JSON.stringify({contract:'adaptive-retention-v2',input,source:resolveCompetency(input,jobRecords),models:[jobProvider.base,jobProvider.designModel,jobProvider.fastModel]}));
    const row=db.prepare('SELECT * FROM job_checkpoints WHERE job_id=?').get(job);
    if(row&&(row.fingerprint!==fingerprint||Date.now()-Date.parse(row.updated_at)>7*24*3600000))throw statusError(409,'Retained stages expired or their source/model changed. Review input and start a new generation.');
    const parts=row?JSON.parse(row.payload):{};
@@ -61,7 +61,7 @@ export async function createApp({database,provider=new AIProvider(),technicalDoc
    const options={records:jobRecords,provider:jobProvider,technicalDocsProvider,onStage:stage,checkpoint};const plan=input.mode==='ai'?await generateAI(input,options):await generateGuided(input,options);await stage('save');
    if(input.mode==='ai')plan.metadata.tokens=jobs.totals(job);
    savePlan(plan,user,{isNew:true,label:plan.metadata.origin,onSaved:saved=>{jobs.ensure(job);db.prepare("UPDATE jobs SET status='completed',stage='save',plan_id=?,error=NULL,updated_at=? WHERE id=?").run(saved.id,now(),job);db.prepare('DELETE FROM job_checkpoints WHERE job_id=?').run(job);jobs.release(job);}});
-  }catch(e){try{storage.transaction(()=>{jobs.ensure(job);db.prepare("UPDATE jobs SET status='failed',error=?,updated_at=? WHERE id=?").run(e.status?e.message:'Generation failed safely. Your input is preserved; resume when ready.',now(),job);});console.error(`generation_failed: ${e.name}`);}catch{/* Cancelled or replaced workers cannot overwrite job state. */}}
+  }catch(e){try{storage.transaction(()=>{jobs.ensure(job);db.prepare("UPDATE jobs SET status='failed',error=?,updated_at=? WHERE id=?").run(generationSignal.aborted&&!controller.signal.aborted?'Generation reached its 20-minute deadline. Validated work is retained; resume when ready.':e.status?e.message:'Generation failed safely. Your input is preserved; resume when ready.',now(),job);});console.error(`generation_failed: ${e.name}`);}catch{/* Cancelled or replaced workers cannot overwrite job state. */}}
   finally{clearInterval(heartbeat);jobs.release(job);controllers.delete(job);activeJobs.delete(job);}
  };
  const server=http.createServer(async(req,res)=>{
@@ -152,7 +152,7 @@ export async function createApp({database,provider=new AIProvider(),technicalDoc
      send(res,202,{jobId:id});setImmediate(()=>makeJob(id,JSON.parse(job.input),user));return;
     }
     const jobMatch=route.match(/^\/api\/jobs\/([a-f0-9-]{36})$/);
-    if(jobMatch&&method==='GET'){jobs.recover();const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(jobMatch[1],user);if(!job)throw statusError(404,'Generation not found');send(res,200,{id:job.id,status:job.status,stage:job.stage,label:stageLabels[job.stage]||job.stage,planId:job.plan_id,error:job.error,usage:jobs.totals(job.id),input:['failed','cancelled'].includes(job.status)?JSON.parse(job.input):undefined});return;}
+    if(jobMatch&&method==='GET'){jobs.recover();const job=db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(jobMatch[1],user);if(!job)throw statusError(404,'Generation not found');send(res,200,{id:job.id,status:job.status,stage:job.stage,label:stageLabels[job.stage]||(/^session_s[1-5]$/.test(job.stage)?`Draft session ${job.stage.slice(-1)} with tasks and worked keys`:job.stage),sessions:JSON.parse(job.input).sessions,planId:job.plan_id,error:job.error,usage:jobs.totals(job.id),diagnostics:jobs.diagnostics(job.id),retainedParts:Object.keys(JSON.parse(db.prepare('SELECT payload FROM job_checkpoints WHERE job_id=?').get(job.id)?.payload||'{}')).filter(k=>!k.startsWith('__')),input:['failed','cancelled'].includes(job.status)?JSON.parse(job.input):undefined});return;}
     const planMatch=route.match(/^\/api\/plans\/([a-f0-9-]{36})(?:\/(revisions|restore|review|duplicate|adapt|regenerate|propose|proposal|accept|discard|retime|evidence|reflection|refine|docx|pdf|pptx|storyboard|ir|assets|print))?$/);
     if(planMatch){const id=planMatch[1],action=planMatch[2];const plan=requirePlan(id,user);
      if(!action&&method==='GET'){plan.quality=qualityCheck(plan);send(res,200,{plan});return;}
