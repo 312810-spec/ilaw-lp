@@ -1,6 +1,6 @@
 # Adaptive complete AI drafting
 
-Implemented on `feat/adaptive-ai-generation`, 8 October 2026. Research baseline was main `60326c9`. This preserves IlawCraft-style AI drafting and the existing Node/SQLite stack; no production package was added.
+Merged through [PR #10](https://github.com/312810-spec/ilaw-lp/pull/10), 8 October 2026. Research baseline was main `60326c9`. This preserves IlawCraft-style AI drafting and the existing Node/SQLite stack; no production package was added.
 
 ## Behavior
 
@@ -24,6 +24,8 @@ The owner-only job response returns bounded safe diagnostic events and retained-
 The prototype checks input/model/credential fingerprints before resuming. Only IDs and hashes go into its state callback; actual content remains at the provider until removed. Polling preserves the ID rather than starting another generation. No automatic provider switching, framework, file upload or external web retrieval was added.
 
 ## Evidence and remaining work
+
+Validation: 115 automated tests, static checks for 75 JavaScript files, and the native Chromium teacher journey passed in [CI run 37708618548](https://github.com/312810-spec/ilaw-lp/actions/runs/37708618548), source head `cbd4338d3cbf95b5cf6799a585caf315855cf492`. The browser journey included diagnostic download, retained-stage resume/cancellation and five-session drafting with nine requests.
 
 Automated tests use synthetic providers and exercise recovery, dependency retention, five-session resume, body timeouts, cancellation, critique failure, ownership/privacy and background lifecycle. These establish software behavior, not subject accuracy. The user's local Gemini connection probe succeeded; this executor cannot reuse that locally encrypted key. A live paired Math/TLE benchmark and teacher correctness/correction-time review remain needed. Native browser CI verifies real DOM interactions with synthetic AI responses.
 

@@ -1,8 +1,12 @@
-# Adaptive AI generation — implementation checkpoint
+# Adaptive AI generation — completed 8 October 2026
 
-Branch: feat/adaptive-ai-generation, baseline main 60326c9. Requested study is being implemented. Provider/body deadlines, Gemini reasoning budgets, bounded jitter/compatibility caching, safe owned diagnostic summaries, candidate-section retention with dependency invalidation, session-based weekly generation and pending automatic critique are implemented. Eighteen focused tests passed; full suite found only the expected prompt-version assertion update (now corrected). Static checks passed at the checkpoint. No live credentials in this executor; user's local Gemini probe succeeded but cannot be reused here. Screenshot bytes unavailable.
+MERGED: PR #10, main 697d564113f1fd5d6ceee4f16931d80c6de4cf72. Verified source head cbd4338d3cbf95b5cf6799a585caf315855cf492. Native Chromium CI run 37708618548 passed all 115 automated tests, static checks (75 JS files), and teacher journey including safe diagnostic download, retained-stage resume/cancellation and five-session adaptive AI drafting in nine successful requests. No new production dependency.
 
-Next: optional isolated native Gemini background prototype, privacy/ownership diagnostics tests, full regression tests and native browser CI; publish feature branch and report implementation/live limits. Retain 27-call durable ledger, cancellation, atomic save and immutable curriculum provenance. Do not claim subject accuracy or policy compliance. Previous merged work below remains delivered.
+Delivered: Gemini reasoning/output profiles, response-body-aware request deadlines, bounded jitter and compatibility caching, candidate-section retention with dependency invalidation, weekly session generation/resume, explicit pending automatic critique, owner-only bounded diagnostic summaries, and an isolated opt-in native background prototype with lifecycle tests. Main code matches the verified feature tree; later handoff-only commits do not change runtime code.
+
+LOCAL UPDATE: stop the existing app, preserve its data directory (SQLite and encryption key) and .env, update application files from main, run npm ci and npm start. Existing account/provider settings remain in the preserved installation. Next useful test is one complete live lesson on the user's computer, then separate Math/TLE content and export review. This executor has no live provider credential; synthetic/native-browser success is not a live lesson-quality score. Native background prototype remains outside production routing.
+
+Previous merged implementation and external dependencies below remain accurate.
 
 # ILAW continuation — 8 October 2026 (Philippines)
 
