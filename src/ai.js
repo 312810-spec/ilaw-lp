@@ -3,6 +3,7 @@ import {normalizeInput,validate,stages,ValidationError} from './schema.js';
 import {resolveCompetency} from './curriculum.js';
 import {assemblePlan,checkStageSessionIds} from './engine.js';
 import {Context7TechnicalProvider} from './context7.js';
+import {qualityCheck} from './quality.js';
 export class ProviderError extends Error{constructor(message,{recoverable=false,code='provider'}={}){super(message);this.name='ProviderError';this.status=502;this.recoverable=recoverable;this.code=code;}}
 // Provider schema subsets differ. Keep transport structural; validate every original constraint locally.
 function transportSchema(schema){if(Array.isArray(schema))return schema.map(transportSchema);if(!schema||typeof schema!=='object')return schema;return Object.fromEntries(Object.entries(schema).filter(([key])=>!['minLength','maxLength','minItems','maxItems','minimum','maximum'].includes(key)).map(([key,value])=>[key,transportSchema(value)]));}
@@ -46,7 +47,7 @@ export class AIProvider{
      lastError=failure(response.status===429?'AI provider rate limit remains after retries. Wait briefly and retry; your input is safe.':'The AI provider is temporarily unavailable after retries. Your input is safe.',{code:'temporary'});
      const retryHeader=response.headers?.get?.('retry-after');const seconds=Number(retryHeader);const wait=retryHeader&&(Number.isFinite(seconds)?seconds*1000:Date.parse(retryHeader)-Date.now());
      if(wait>30000)throw lastError;
-     if(attempt<3){await onProgress('retry');await this.sleep(Math.max(1000*attempt,Math.min(30000,wait||0))+Math.floor(this.random()*250),{signal:this.signal});continue;}throw lastError;
+     if(attempt<3){await onProgress('retry');await this.sleep(Math.min(30000,Math.max(1000*attempt,Math.min(30000,wait||0))+Math.floor(this.random()*250)),{signal:this.signal});continue;}throw lastError;
     }
     throw failure(`AI request rejected (HTTP ${response.status}). Check provider/model configuration in AI settings.`,{code:'configuration'});
    }
@@ -176,7 +177,7 @@ export async function generateAI(raw,{records,provider=new AIProvider(),onStage=
  parts.tokens=usage;parts.models=[provider.designModel,provider.fastModel];const plan=assemblePlan(input,source,parts,'ai');
  plan.metadata.promptVersion='ilaw-adaptive-v2';plan.metadata.retainedStages=saved;plan.metadata.automaticReview=reviewPending?'pending':'completed';
  if(perSession)plan.metadata.aiWorkflow='session-adaptive';else if(input.aiWorkflow==='ilawcraft'){plan.metadata.aiWorkflow='staged-recovery';plan.metadata.recovery='Resumed generation using retained validated sections.';}
- if(plan.quality.counts.error)throw new ProviderError('AI draft still has invalid alignment after recovery. Your input is safe.',{code:'output'});return recordTechnicalReference(plan,input,technicalReference);
+ plan.quality=qualityCheck(plan);if(plan.quality.counts.error)throw new ProviderError('AI draft still has invalid alignment after recovery. Your input is safe.',{code:'output'});return recordTechnicalReference(plan,input,technicalReference);
 }
 export async function regenerateAI(plan,target,provider=new AIProvider(),technicalDocsProvider=new Context7TechnicalProvider()){
  if(target.instructions!=null&&(typeof target.instructions!=='string'||target.instructions.length>1000))throw new ValidationError('Revision instructions must be text of at most 1000 characters');
